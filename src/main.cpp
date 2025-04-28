@@ -12,18 +12,14 @@ int main() {
   while (true) {
     canzero::telemetry::update();
 
-    /* canzero_frame frame; */
-    /* if (canzero::telemetry::can0_recv(&frame)) { */
-    /*   std::println("can0 frame"); */
-    /* } */
+    canzero_frame frame;
+    if (canzero::telemetry::can0_recv(&frame)) {
+      std::println("can0 frame");
+    }
 
-    /*if (basicInterval.next()) {*/
-    /*  canzero_frame frame;*/
-    /*  frame.data[0] = 0xFF;*/
-    /*  frame.dlc = 1;*/
-    /*  frame.id = 0x70;*/
-    /**/
-    /*  canzero::telemetry::can0_send(&frame);*/
-    /*}*/
+    if (canzero::telemetry::can1_recv(&frame)) {
+      std::println("can1 frame");
+    }
+
   }
 }

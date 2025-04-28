@@ -3,7 +3,7 @@
 
 namespace canzero::telemetry {
 
-bool Connection::recv(canzero_frame *frame) {
+bool Connection::recv(std::uint8_t *bus, canzero_frame *frame) {
   while (true) {
     switch (m_state) {
     case ConnectionState::Closed:
@@ -18,11 +18,13 @@ bool Connection::recv(canzero_frame *frame) {
       case telemetry_board::TcpRecvInfo::EMPTY:
         return false;
       case telemetry_board::TcpRecvInfo::SUCC:
+        std::println("Received option request");
         if (optionRequest.tag == 0x0) { // Option Request
           if (optionRequest.sync == false && optionRequest.reqsuc == false) {
             // NOTE: Spec states that no response should be send as it is
             // implied that all canzero telemetry servers should support the
             // default communication pattern.
+            std::println("Connection fully setup");
             m_state = ConnectionState::Communication;
           } else {
             // Handle option requests
@@ -86,10 +88,11 @@ bool Connection::recv(canzero_frame *frame) {
           close();
           return false;
         [[likely]] case PacketTag::NetworkFrame:
+          *bus = packet.bus;
           frame->id = packet.canId;
           frame->dlc = packet.dlc;
           std::memcpy(frame->data, &packet.data, sizeof(std::uint64_t));
-          continue;
+          return true;
         }
       }
     }
@@ -111,10 +114,11 @@ bool Connection::send(std::uint8_t bus, canzero_frame *frame,
     case telemetry_board::TcpSendInfo::SUCC:
       return true;
     }
-  }
+  } 
   return false;
 }
 void Connection::close() {
+  std::println("Closing connection");
   m_tcp.close();
   m_state = ConnectionState::Closed;
 }

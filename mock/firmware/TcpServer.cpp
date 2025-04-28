@@ -32,13 +32,15 @@ TcpServer::TcpServer(std::size_t maxPacketSize, std::uint16_t port)
 }
 
 TcpServer::~TcpServer() {
-  auto internals = reinterpret_cast<LinuxTcpServer *>(m_internals);
+  if (m_internals != nullptr) {
+    auto internals = reinterpret_cast<LinuxTcpServer *>(m_internals);
 
-  if (internals->welcomeFd != -1) {
-    close(internals->welcomeFd);
+    if (internals->welcomeFd != -1) {
+      close(internals->welcomeFd);
+    }
+
+    free(m_internals);
   }
-
-  free(m_internals);
 }
 
 void TcpServer::start() {
@@ -87,7 +89,7 @@ void TcpServer::start() {
       internals->welcomePort = ntohs(realAddr.sin_port);
     }
   }
-
+  assert(fd != -1);
   internals->welcomeFd = fd;
 }
 
@@ -116,7 +118,8 @@ std::optional<TcpConnection> TcpServer::accept() {
   // Make client socket non-blocking
   int flags = fcntl(clientFd, F_GETFL, 0);
   if (flags >= 0) {
-    fcntl(clientFd, F_SETFL, flags | O_NONBLOCK);
+    int x = fcntl(clientFd, F_SETFL, flags | O_NONBLOCK);
+    assert(x >= 0);
   }
   LinuxTcpConnection *connectionInternals =
       reinterpret_cast<LinuxTcpConnection *>(
@@ -137,6 +140,7 @@ TcpConnection::~TcpConnection() {
 }
 
 void TcpConnection::close() {
+  std::println("Closing TcpConnection");
   if (m_internals != nullptr) {
     auto internals = reinterpret_cast<LinuxTcpConnection *>(m_internals);
     if (internals->connectionFd != -1) {

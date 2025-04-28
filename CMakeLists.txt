@@ -14,6 +14,7 @@ add_executable(${PROJECT_NAME}
   src/main.cpp
   src/canzero/telemetry/telemetry.cpp
   src/canzero/telemetry/becon.cpp
+  src/canzero/telemetry/server.cpp
   src/canzero/telemetry/connection.cpp
   # src/canzero/canzero.cpp
   mock/firmware/UdpServer.cpp

@@ -51,6 +51,21 @@ private:
 class TcpServer {
 public:
   explicit TcpServer(std::size_t maxPacketSize, std::uint16_t port = 0);
+  TcpServer() : m_internals(nullptr) {}
+  TcpServer(const TcpServer &) = delete;
+  TcpServer &operator=(const TcpServer &) = delete;
+
+  TcpServer(TcpServer &&o) : m_internals(o.m_internals) {
+    o.m_internals = nullptr;
+  }
+  TcpServer &operator=(TcpServer && o) {
+    if (this == &o) {
+      return *this;
+    }
+    this->~TcpServer();
+    std::swap(m_internals, o.m_internals);
+    return *this;
+  }
 
   ~TcpServer();
 

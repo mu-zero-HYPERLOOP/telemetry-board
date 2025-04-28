@@ -6,7 +6,7 @@ template <typename T, std::size_t SIZE> struct CyclicBuffer {
 
   CyclicBuffer() : m_buffer(), m_read(0), m_write(0) {}
 
-  bool enqueue(const T &value) {
+  inline bool enqueue(const T &value) {
     const size_t w = m_write;
     size_t w_next = w + 1;
     if (w_next == SIZE) {
@@ -21,7 +21,15 @@ template <typename T, std::size_t SIZE> struct CyclicBuffer {
     return true;
   }
 
-  std::optional<T> dequeue() {
+  inline bool hasSpace() const {
+    size_t wnext = m_write + 1;
+    if (wnext == SIZE) {
+      wnext = 0;
+    }
+    return m_read != wnext;
+  }
+
+  inline std::optional<T> dequeue() {
     size_t r = m_read;
     const size_t w = m_write;
     if (r == w) {
@@ -33,6 +41,16 @@ template <typename T, std::size_t SIZE> struct CyclicBuffer {
       r = 0U;
     }
     m_read = r;
+    return ret;
+  }
+
+  inline std::optional<T> peek() {
+    size_t r = m_read;
+    const size_t w = m_write;
+    if (r == w) {
+      return std::nullopt;
+    }
+    T ret = m_buffer[r];
     return ret;
   }
 
