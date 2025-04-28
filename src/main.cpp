@@ -1,5 +1,5 @@
 #include "canzero/canzero.h"
-#include "canzero/telemetry/telemetry.hpp"
+#include "canzero/telemetry/telemetry.h"
 #include "util/interval.h"
 #include <print>
 
@@ -17,13 +17,13 @@ int main() {
     /*   std::println("can0 frame"); */
     /* } */
 
-    if (basicInterval.next()) {
-      canzero_frame frame;
-      frame.data[0] = 0xFF;
-      frame.dlc = 1;
-      frame.id = 0x70;
-
-      canzero::telemetry::can0_send(&frame);
-    }
+    /*if (basicInterval.next()) {*/
+    /*  canzero_frame frame;*/
+    /*  frame.data[0] = 0xFF;*/
+    /*  frame.dlc = 1;*/
+    /*  frame.id = 0x70;*/
+    /**/
+    /*  canzero::telemetry::can0_send(&frame);*/
+    /*}*/
   }
 }

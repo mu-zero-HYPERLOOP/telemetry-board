@@ -13,6 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(${PROJECT_NAME}
   src/main.cpp
   src/canzero/telemetry/telemetry.cpp
+  src/canzero/telemetry/becon.cpp
   # src/canzero/canzero.cpp
   mock/firmware/UdpServer.cpp
   mock/firmware/TcpServer.cpp
