@@ -55,7 +55,6 @@ struct Datagram {
     return datagram;
   }
 
-
   static Datagram createNetworkDescription(std::uint16_t servicePort,
                                            std::uint64_t networkHash,
                                            std::uint64_t timebase,
@@ -89,11 +88,11 @@ struct Datagram {
     return datagram;
   }
 
-  static Datagram createNetworkDescription(ServerInfo* serverInfo) {
-    return createNetworkDescription(serverInfo->servicePort, serverInfo->networkHash, 
-        static_cast<std::uint32_t>(serverInfo->timebase), serverInfo->serviceName,
-        serverInfo->buildTime, serverInfo->serverName);
-
+  static Datagram createNetworkDescription(ServerInfo *serverInfo) {
+    return createNetworkDescription(
+        serverInfo->servicePort, serverInfo->networkHash,
+        (Timestamp::now() - serverInfo->timebase).as_us(),
+        serverInfo->serviceName, serverInfo->buildTime, serverInfo->serverName);
   }
 };
 

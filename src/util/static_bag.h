@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <utility>
 
 template <typename T, std::size_t Capacity> class StaticBag {
@@ -17,23 +18,25 @@ private:
 
 public:
   StaticBag() : m_size(0) {};
+
   ~StaticBag() {
     for (std::uint32_t i = 0; i < m_size; ++i) {
       m_values[i].value.~T();
     }
   }
 
-  bool add(T value) {
+  template <typename Tf> bool add(Tf &&value) {
     if (m_size == Capacity) {
       return false;
     }
-    m_values[m_size++].value = std::move(value);
+    new (&m_values[m_size++].value) T(std::forward<Tf>(value));
     return true;
   }
 
   void remove(std::uint32_t idx) {
     assert(idx < m_size);
     m_values[idx].value = std::move(m_values[--m_size].value);
+    std::destroy_at(&m_values[m_size].value);
   }
 
   T &operator[](std::uint32_t i) {

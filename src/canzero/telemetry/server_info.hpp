@@ -12,7 +12,6 @@ struct ServerInfo {
   std::string_view serviceName;
   std::string_view buildTime;
   std::string_view serverName;
-
 };
 
 }

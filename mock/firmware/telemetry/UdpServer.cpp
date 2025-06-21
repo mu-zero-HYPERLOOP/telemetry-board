@@ -5,9 +5,7 @@
 #include <cstdlib>
 #include <cstring> // for std::memset
 #include <fcntl.h> // for fcntl()
-#include <iterator>
 #include <netinet/in.h> // for sockaddr_in
-#include <print>
 #include <stdexcept>
 #include <sys/socket.h> // for socket functions
 #include <unistd.h>     // for close()
@@ -116,7 +114,6 @@ bool UdpServer::recv(void *data, std::size_t size, SocketAddr *addr) {
     return false;
   }
   if (received != size) {
-    std::println("Received unexpected datagramsize");
   }
 
   if (addr) {

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <span>
+
 namespace telemetry_board {
 
 // This struct is identical to a canzero_frame!
@@ -13,6 +15,14 @@ typedef struct {
   uint8_t dlc;
   uint8_t data[8];
 } CanFrame;
+
+typedef struct {
+  uint32_t mask;
+  uint32_t id;
+} CanFilter;
+
+void can0_begin(std::uint32_t baudrate, std::span<CanFilter> filters);
+void can1_begin(std::uint32_t baudrate, std::span<CanFilter> filters);
 
 bool can0_recv(CanFrame *frame);
 bool can1_recv(CanFrame *frame);

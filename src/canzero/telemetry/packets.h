@@ -36,7 +36,7 @@ enum class PacketTag : std::uint8_t {
   NetworkFrame = 0x1,
 };
 
-struct Packet {
+struct __attribute__((packed)) Packet {
   PacketTag tag;
   std::uint8_t bus;
   std::uint8_t dlc;

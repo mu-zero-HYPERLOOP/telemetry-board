@@ -1,16 +1,16 @@
 #pragma once
 
 #include "canzero/canzero.h"
+#include <inttypes.h>
+
 namespace canzero::telemetry {
 
 void begin();
 
 void update();
 
-bool can0_recv(canzero_frame *frame);
-bool can1_recv(canzero_frame *frame);
+bool can_recv(uint8_t bus, canzero_frame *frame);
 
-void can0_send(canzero_frame *frame);
-void can1_send(canzero_frame *frame);
+bool can_send(uint8_t bus, canzero_frame *frame);
 
 } // namespace canzero::telemetry

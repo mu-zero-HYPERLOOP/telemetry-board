@@ -9,6 +9,11 @@ public:
 
   inline void reset() { m_last = Timestamp::now(); }
 
+  inline bool peekNext() {
+    const auto now = Timestamp::now();
+    return now - m_last > m_period;
+  }
+
   inline bool next() {
     const auto now = Timestamp::now();
     if (now - m_last > m_period) {

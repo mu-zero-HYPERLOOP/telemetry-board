@@ -14,55 +14,104 @@ uint64_t min_u64(uint64_t v, uint64_t max) {
 }
 uint64_t DMAMEM __oe_config_hash;
 date_time DMAMEM __oe_build_time;
-uint8_t DMAMEM __oe_x;
+telemetry_state DMAMEM __oe_telemetry_state;
+uint32_t DMAMEM __oe_foo;
+uint32_t DMAMEM __oe_bar;
+uint32_t DMAMEM __oe_baz;
+uint32_t DMAMEM __oe_foobar;
 static void canzero_serialize_canzero_message_get_resp(canzero_message_get_resp* msg, canzero_frame* frame) {
-  uint8_t* data = frame->data;
-  for(uint8_t i = 0; i < 8; ++i){
-    data[i] = 0;
-  }
-  frame->id = 0x19D;
-  frame->dlc = 8;
-  ((uint32_t*)data)[0] = (uint8_t)(msg->m_header.m_sof & (0xFF >> (8 - 1)));
-  ((uint32_t*)data)[0] |= (uint8_t)(msg->m_header.m_eof & (0xFF >> (8 - 1))) << 1;
-  ((uint32_t*)data)[0] |= (uint8_t)(msg->m_header.m_toggle & (0xFF >> (8 - 1))) << 2;
-  ((uint32_t*)data)[0] |= (uint16_t)(msg->m_header.m_od_index & (0xFFFF >> (16 - 13))) << 3;
-  ((uint32_t*)data)[0] |= msg->m_header.m_client_id << 16;
-  ((uint32_t*)data)[0] |= msg->m_header.m_server_id << 24;
-  ((uint32_t*)data)[1] = msg->m_data;
-}
-static void canzero_serialize_canzero_message_set_resp(canzero_message_set_resp* msg, canzero_frame* frame) {
-  uint8_t* data = frame->data;
+  volatile uint8_t* data = (volatile uint8_t*)frame->data;
   for(uint8_t i = 0; i < 8; ++i){
     data[i] = 0;
   }
   frame->id = 0x1BD;
+  frame->dlc = 8;
+  ((volatile uint32_t*)data)[0] = (uint8_t)(msg->m_header.m_sof & (0xFF >> (8 - 1)));
+  ((volatile uint32_t*)data)[0] |= (uint8_t)(msg->m_header.m_eof & (0xFF >> (8 - 1))) << 1;
+  ((volatile uint32_t*)data)[0] |= (uint8_t)(msg->m_header.m_toggle & (0xFF >> (8 - 1))) << 2;
+  ((volatile uint32_t*)data)[0] |= (uint16_t)(msg->m_header.m_od_index & (0xFFFF >> (16 - 13))) << 3;
+  ((volatile uint32_t*)data)[0] |= msg->m_header.m_client_id << 16;
+  ((volatile uint32_t*)data)[0] |= msg->m_header.m_server_id << 24;
+  ((volatile uint32_t*)data)[1] = msg->m_data;
+}
+static void canzero_serialize_canzero_message_set_resp(canzero_message_set_resp* msg, canzero_frame* frame) {
+  volatile uint8_t* data = (volatile uint8_t*)frame->data;
+  for(uint8_t i = 0; i < 8; ++i){
+    data[i] = 0;
+  }
+  frame->id = 0x1DD;
   frame->dlc = 4;
-  ((uint32_t*)data)[0] = (uint16_t)(msg->m_header.m_od_index & (0xFFFF >> (16 - 13)));
-  ((uint32_t*)data)[0] |= msg->m_header.m_client_id << 13;
-  ((uint32_t*)data)[0] |= msg->m_header.m_server_id << 21;
-  ((uint32_t*)data)[0] |= (uint8_t)(msg->m_header.m_erno & (0xFF >> (8 - 1))) << 29;
+  ((volatile uint32_t*)data)[0] = (uint16_t)(msg->m_header.m_od_index & (0xFFFF >> (16 - 13)));
+  ((volatile uint32_t*)data)[0] |= msg->m_header.m_client_id << 13;
+  ((volatile uint32_t*)data)[0] |= msg->m_header.m_server_id << 21;
+  ((volatile uint32_t*)data)[0] |= (uint8_t)(msg->m_header.m_erno & (0xFF >> (8 - 1))) << 29;
+}
+static void canzero_serialize_canzero_message_telemetry_board_stream_state(canzero_message_telemetry_board_stream_state* msg, canzero_frame* frame) {
+  volatile uint8_t* data = (volatile uint8_t*)frame->data;
+  for(uint8_t i = 0; i < 8; ++i){
+    data[i] = 0;
+  }
+  frame->id = 0xD8;
+  frame->dlc = 1;
+  ((volatile uint32_t*)data)[0] = (uint8_t)(msg->m_telemetry_state & (0xFF >> (8 - 1)));
+}
+static void canzero_serialize_canzero_message_telemetry_board_stream_foo(canzero_message_telemetry_board_stream_foo* msg, canzero_frame* frame) {
+  volatile uint8_t* data = (volatile uint8_t*)frame->data;
+  for(uint8_t i = 0; i < 8; ++i){
+    data[i] = 0;
+  }
+  frame->id = 0x98;
+  frame->dlc = 4;
+  ((volatile uint32_t*)data)[0] = msg->m_foo;
+}
+static void canzero_serialize_canzero_message_telemetry_board_stream_bar(canzero_message_telemetry_board_stream_bar* msg, canzero_frame* frame) {
+  volatile uint8_t* data = (volatile uint8_t*)frame->data;
+  for(uint8_t i = 0; i < 8; ++i){
+    data[i] = 0;
+  }
+  frame->id = 0x58;
+  frame->dlc = 4;
+  ((volatile uint32_t*)data)[0] = msg->m_bar;
+}
+static void canzero_serialize_canzero_message_telemetry_board_stream_baz(canzero_message_telemetry_board_stream_baz* msg, canzero_frame* frame) {
+  volatile uint8_t* data = (volatile uint8_t*)frame->data;
+  for(uint8_t i = 0; i < 8; ++i){
+    data[i] = 0;
+  }
+  frame->id = 0x78;
+  frame->dlc = 4;
+  ((volatile uint32_t*)data)[0] = msg->m_baz;
+}
+static void canzero_serialize_canzero_message_telemetry_board_stream_foobar(canzero_message_telemetry_board_stream_foobar* msg, canzero_frame* frame) {
+  volatile uint8_t* data = (volatile uint8_t*)frame->data;
+  for(uint8_t i = 0; i < 8; ++i){
+    data[i] = 0;
+  }
+  frame->id = 0xB8;
+  frame->dlc = 4;
+  ((volatile uint32_t*)data)[0] = msg->m_foobar;
 }
 static void canzero_serialize_canzero_message_heartbeat_can0(canzero_message_heartbeat_can0* msg, canzero_frame* frame) {
-  uint8_t* data = frame->data;
+  volatile uint8_t* data = (volatile uint8_t*)frame->data;
   for(uint8_t i = 0; i < 8; ++i){
     data[i] = 0;
   }
-  frame->id = 0x1D4;
+  frame->id = 0x1F4;
   frame->dlc = 2;
-  ((uint32_t*)data)[0] = msg->m_node_id;
-  ((uint32_t*)data)[0] |= (uint8_t)(msg->m_unregister & (0xFF >> (8 - 1))) << 8;
-  ((uint32_t*)data)[0] |= (uint8_t)(msg->m_ticks_next & (0xFF >> (8 - 7))) << 9;
+  ((volatile uint32_t*)data)[0] = msg->m_node_id;
+  ((volatile uint32_t*)data)[0] |= (uint8_t)(msg->m_unregister & (0xFF >> (8 - 1))) << 8;
+  ((volatile uint32_t*)data)[0] |= (uint8_t)(msg->m_ticks_next & (0xFF >> (8 - 7))) << 9;
 }
 static void canzero_serialize_canzero_message_heartbeat_can1(canzero_message_heartbeat_can1* msg, canzero_frame* frame) {
-  uint8_t* data = frame->data;
+  volatile uint8_t* data = (volatile uint8_t*)frame->data;
   for(uint8_t i = 0; i < 8; ++i){
     data[i] = 0;
   }
-  frame->id = 0x1D3;
+  frame->id = 0x1F3;
   frame->dlc = 2;
-  ((uint32_t*)data)[0] = msg->m_node_id;
-  ((uint32_t*)data)[0] |= (uint8_t)(msg->m_unregister & (0xFF >> (8 - 1))) << 8;
-  ((uint32_t*)data)[0] |= (uint8_t)(msg->m_ticks_next & (0xFF >> (8 - 7))) << 9;
+  ((volatile uint32_t*)data)[0] = msg->m_node_id;
+  ((volatile uint32_t*)data)[0] |= (uint8_t)(msg->m_unregister & (0xFF >> (8 - 1))) << 8;
+  ((volatile uint32_t*)data)[0] |= (uint8_t)(msg->m_ticks_next & (0xFF >> (8 - 7))) << 9;
 }
 static void canzero_deserialize_canzero_message_get_req(canzero_frame* frame, canzero_message_get_req* msg) {
   uint8_t* data = frame->data;
@@ -175,7 +224,7 @@ static void job_pool_allocator_free(job_t *job) {
   job_allocator.freelist = entry;
 }
 
-#define SCHEDULER_HEAP_SIZE 66
+#define SCHEDULER_HEAP_SIZE 71
 typedef struct {
   job_t *heap[SCHEDULER_HEAP_SIZE]; // job**
   uint32_t size;
@@ -248,7 +297,7 @@ static void scheduler_unschedule() {
   scheduler.size -= 1;
   scheduler_reschedule(scheduler.heap[0]->climax);
 }
-static const uint32_t get_resp_fragmentation_interval = 10;
+static const uint32_t get_resp_fragmentation_interval = 100;
 static void schedule_get_resp_fragmentation_job(uint32_t *fragmentation_buffer, uint8_t size, uint8_t od_index, uint8_t client_id) {
   job_t *fragmentation_job = job_pool_allocator_alloc();
   fragmentation_job->climax = canzero_get_time() + get_resp_fragmentation_interval;
@@ -262,7 +311,7 @@ static void schedule_get_resp_fragmentation_job(uint32_t *fragmentation_buffer, 
 }
 
 static job_t heartbeat_job;
-static const uint32_t heartbeat_interval = 100;
+static const uint32_t heartbeat_interval = 100 + 3 * CANZERO_NODE_ID;
 static void schedule_heartbeat_job() {
   heartbeat_job.climax = canzero_get_time();
   heartbeat_job.tag = HEARTBEAT_JOB_TAG;
@@ -306,6 +355,56 @@ static void schedule_heartbeat_wdg_job() {
   scheduler_schedule(&heartbeat_wdg_job);
 }
 
+static job_t state_interval_job;
+static const uint32_t state_interval = 1;
+static void schedule_state_interval_job(){
+  uint32_t time = canzero_get_time();
+  state_interval_job.climax = time + state_interval;
+  state_interval_job.tag = STREAM_INTERVAL_JOB_TAG;
+  state_interval_job.job.stream_job.stream_id = 0;
+  state_interval_job.job.stream_job.last_schedule = time;
+  scheduler_schedule(&state_interval_job);
+}
+static job_t foo_interval_job;
+static const uint32_t foo_interval = 1;
+static void schedule_foo_interval_job(){
+  uint32_t time = canzero_get_time();
+  foo_interval_job.climax = time + foo_interval;
+  foo_interval_job.tag = STREAM_INTERVAL_JOB_TAG;
+  foo_interval_job.job.stream_job.stream_id = 1;
+  foo_interval_job.job.stream_job.last_schedule = time;
+  scheduler_schedule(&foo_interval_job);
+}
+static job_t bar_interval_job;
+static const uint32_t bar_interval = 1;
+static void schedule_bar_interval_job(){
+  uint32_t time = canzero_get_time();
+  bar_interval_job.climax = time + bar_interval;
+  bar_interval_job.tag = STREAM_INTERVAL_JOB_TAG;
+  bar_interval_job.job.stream_job.stream_id = 2;
+  bar_interval_job.job.stream_job.last_schedule = time;
+  scheduler_schedule(&bar_interval_job);
+}
+static job_t baz_interval_job;
+static const uint32_t baz_interval = 1;
+static void schedule_baz_interval_job(){
+  uint32_t time = canzero_get_time();
+  baz_interval_job.climax = time + baz_interval;
+  baz_interval_job.tag = STREAM_INTERVAL_JOB_TAG;
+  baz_interval_job.job.stream_job.stream_id = 3;
+  baz_interval_job.job.stream_job.last_schedule = time;
+  scheduler_schedule(&baz_interval_job);
+}
+static job_t foobar_interval_job;
+static const uint32_t foobar_interval = 1;
+static void schedule_foobar_interval_job(){
+  uint32_t time = canzero_get_time();
+  foobar_interval_job.climax = time + foobar_interval;
+  foobar_interval_job.tag = STREAM_INTERVAL_JOB_TAG;
+  foobar_interval_job.job.stream_job.stream_id = 4;
+  foobar_interval_job.job.stream_job.last_schedule = time;
+  scheduler_schedule(&foobar_interval_job);
+}
 
 static void schedule_jobs(uint32_t time) {
   for (uint8_t i = 0; i < 100; ++i) {
@@ -318,7 +417,61 @@ static void schedule_jobs(uint32_t time) {
     switch (job->tag) {
       case STREAM_INTERVAL_JOB_TAG: {
         switch (job->job.stream_job.stream_id) {
-
+      case 0: {
+        job->job.stream_job.last_schedule = time;
+        scheduler_reschedule(time + 1);
+        canzero_exit_critical();
+        canzero_message_telemetry_board_stream_state stream_message;
+        stream_message.m_telemetry_state = __oe_telemetry_state;
+        canzero_frame stream_frame;
+        canzero_serialize_canzero_message_telemetry_board_stream_state(&stream_message, &stream_frame);
+        canzero_can1_send(&stream_frame);
+        break;
+      }
+      case 1: {
+        job->job.stream_job.last_schedule = time;
+        scheduler_reschedule(time + 1);
+        canzero_exit_critical();
+        canzero_message_telemetry_board_stream_foo stream_message;
+        stream_message.m_foo = __oe_foo;
+        canzero_frame stream_frame;
+        canzero_serialize_canzero_message_telemetry_board_stream_foo(&stream_message, &stream_frame);
+        canzero_can1_send(&stream_frame);
+        break;
+      }
+      case 2: {
+        job->job.stream_job.last_schedule = time;
+        scheduler_reschedule(time + 1);
+        canzero_exit_critical();
+        canzero_message_telemetry_board_stream_bar stream_message;
+        stream_message.m_bar = __oe_bar;
+        canzero_frame stream_frame;
+        canzero_serialize_canzero_message_telemetry_board_stream_bar(&stream_message, &stream_frame);
+        canzero_can1_send(&stream_frame);
+        break;
+      }
+      case 3: {
+        job->job.stream_job.last_schedule = time;
+        scheduler_reschedule(time + 1);
+        canzero_exit_critical();
+        canzero_message_telemetry_board_stream_baz stream_message;
+        stream_message.m_baz = __oe_baz;
+        canzero_frame stream_frame;
+        canzero_serialize_canzero_message_telemetry_board_stream_baz(&stream_message, &stream_frame);
+        canzero_can0_send(&stream_frame);
+        break;
+      }
+      case 4: {
+        job->job.stream_job.last_schedule = time;
+        scheduler_reschedule(time + 1);
+        canzero_exit_critical();
+        canzero_message_telemetry_board_stream_foobar stream_message;
+        stream_message.m_foobar = __oe_foobar;
+        canzero_frame stream_frame;
+        canzero_serialize_canzero_message_telemetry_board_stream_foobar(&stream_message, &stream_frame);
+        canzero_can0_send(&stream_frame);
+        break;
+      }
         default:
           canzero_exit_critical();
           break;
@@ -330,15 +483,15 @@ static void schedule_jobs(uint32_t time) {
         canzero_exit_critical();
         canzero_frame heartbeat_frame;
         canzero_message_heartbeat_can0 heartbeat_can0;
-        heartbeat_can0.m_node_id = node_id_test1;
+        heartbeat_can0.m_node_id = node_id_telemetry_board;
         heartbeat_can0.m_unregister = 0;
-        heartbeat_can0.m_ticks_next = 4;
+        heartbeat_can0.m_ticks_next = 14;
         canzero_serialize_canzero_message_heartbeat_can0(&heartbeat_can0, &heartbeat_frame);
         canzero_can0_send(&heartbeat_frame);
         canzero_message_heartbeat_can1 heartbeat_can1;
-        heartbeat_can1.m_node_id = node_id_test1;
+        heartbeat_can1.m_node_id = node_id_telemetry_board;
         heartbeat_can1.m_unregister = 0;
-        heartbeat_can1.m_ticks_next = 4;
+        heartbeat_can1.m_ticks_next = 14;
         canzero_serialize_canzero_message_heartbeat_can1(&heartbeat_can1, &heartbeat_frame);
         canzero_can1_send(&heartbeat_frame);
         break;
@@ -383,7 +536,7 @@ static void schedule_jobs(uint32_t time) {
         fragmentation_response.m_header.m_toggle = fragmentation_job->offset % 2;
         fragmentation_response.m_header.m_od_index = fragmentation_job->od_index;
         fragmentation_response.m_header.m_client_id = fragmentation_job->client_id;
-        fragmentation_response.m_header.m_server_id = 0xC;
+        fragmentation_response.m_header.m_server_id = 0x1;
         fragmentation_response.m_data = fragmentation_job->buffer[fragmentation_job->offset];
         fragmentation_job->offset += 1;
         if (fragmentation_job->offset == fragmentation_job->size) {
@@ -416,7 +569,7 @@ static uint32_t DMAMEM __oe_build_time_rx_fragmentation_buffer[2];
 static PROGMEM void canzero_handle_get_req(canzero_frame* frame) {
   canzero_message_get_req msg;
   canzero_deserialize_canzero_message_get_req(frame, &msg);
-  if (msg.m_header.m_server_id != node_id_test1) {
+  if (msg.m_header.m_server_id != node_id_telemetry_board) {
     return;
   }
   canzero_message_get_resp resp{};
@@ -450,7 +603,35 @@ static PROGMEM void canzero_handle_get_req(canzero_frame* frame) {
     break;
   }
   case 2: {
-    resp.m_data |= ((uint32_t)(__oe_x & (0xFF >> (8 - 8)))) << 0;
+    resp.m_data |= ((uint32_t)(((uint8_t)__oe_telemetry_state) & (0xFF >> (8 - 1)))) << 0;
+    resp.m_header.m_sof = 1;
+    resp.m_header.m_eof = 1;
+    resp.m_header.m_toggle = 0;
+    break;
+  }
+  case 3: {
+    resp.m_data |= (__oe_foo & (0xFFFFFFFF >> (32 - 32))) << 0;
+    resp.m_header.m_sof = 1;
+    resp.m_header.m_eof = 1;
+    resp.m_header.m_toggle = 0;
+    break;
+  }
+  case 4: {
+    resp.m_data |= (__oe_bar & (0xFFFFFFFF >> (32 - 32))) << 0;
+    resp.m_header.m_sof = 1;
+    resp.m_header.m_eof = 1;
+    resp.m_header.m_toggle = 0;
+    break;
+  }
+  case 5: {
+    resp.m_data |= (__oe_baz & (0xFFFFFFFF >> (32 - 32))) << 0;
+    resp.m_header.m_sof = 1;
+    resp.m_header.m_eof = 1;
+    resp.m_header.m_toggle = 0;
+    break;
+  }
+  case 6: {
+    resp.m_data |= (__oe_foobar & (0xFFFFFFFF >> (32 - 32))) << 0;
     resp.m_header.m_sof = 1;
     resp.m_header.m_eof = 1;
     resp.m_header.m_toggle = 0;
@@ -471,7 +652,7 @@ static uint32_t DMAMEM build_time_tmp_tx_fragmentation_offset = 0;
 static PROGMEM void canzero_handle_set_req(canzero_frame* frame) {
   canzero_message_set_req msg;
   canzero_deserialize_canzero_message_set_req(frame, &msg);
-  if (msg.m_header.m_server_id != 12) {
+  if (msg.m_header.m_server_id != 1) {
     return;
   }
   canzero_message_set_resp resp{};
@@ -527,9 +708,45 @@ static PROGMEM void canzero_handle_set_req(canzero_frame* frame) {
     if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
       return;
     }
-    uint8_t x_tmp;
-    x_tmp = ((uint8_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 8)))));
-    canzero_set_x(x_tmp);
+    telemetry_state telemetry_state_tmp;
+    telemetry_state_tmp = ((telemetry_state)((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 1))));
+    canzero_set_telemetry_state(telemetry_state_tmp);
+    break;
+  }
+  case 3 : {
+    if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
+      return;
+    }
+    uint32_t foo_tmp;
+    foo_tmp = ((uint32_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 32)))));
+    canzero_set_foo(foo_tmp);
+    break;
+  }
+  case 4 : {
+    if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
+      return;
+    }
+    uint32_t bar_tmp;
+    bar_tmp = ((uint32_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 32)))));
+    canzero_set_bar(bar_tmp);
+    break;
+  }
+  case 5 : {
+    if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
+      return;
+    }
+    uint32_t baz_tmp;
+    baz_tmp = ((uint32_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 32)))));
+    canzero_set_baz(baz_tmp);
+    break;
+  }
+  case 6 : {
+    if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
+      return;
+    }
+    uint32_t foobar_tmp;
+    foobar_tmp = ((uint32_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 32)))));
+    canzero_set_foobar(foobar_tmp);
     break;
   }
   default:
@@ -610,10 +827,10 @@ void canzero_can0_poll() {
   canzero_frame frame;
   while (canzero_can0_recv(&frame)) {
     switch (frame.id) {
-      case 0x19E:
+      case 0x1BE:
         canzero_handle_get_req(&frame);
         break;
-      case 0x1D4:
+      case 0x1F4:
         canzero_handle_heartbeat_can0(&frame);
         break;
     }
@@ -623,10 +840,10 @@ void canzero_can1_poll() {
   canzero_frame frame;
   while (canzero_can1_recv(&frame)) {
     switch (frame.id) {
-      case 0x1BE:
+      case 0x1DE:
         canzero_handle_set_req(&frame);
         break;
-      case 0x1D3:
+      case 0x1F3:
         canzero_handle_heartbeat_can1(&frame);
         break;
     }
@@ -687,7 +904,7 @@ uint32_t canzero_update_continue(uint32_t time){
 #define BUILD_MIN   ((BUILD_TIME_IS_BAD) ? 99 :  COMPUTE_BUILD_MIN)
 #define BUILD_SEC   ((BUILD_TIME_IS_BAD) ? 99 :  COMPUTE_BUILD_SEC)
 void canzero_init() {
-  __oe_config_hash = 4361614035762474195ull;
+  __oe_config_hash = 15019298173904265123ull;
   __oe_build_time = {
     .m_year = BUILD_YEAR,
     .m_month = BUILD_MONTH,
@@ -703,6 +920,11 @@ void canzero_init() {
   scheduler.size = 0;
   schedule_heartbeat_job();
   schedule_heartbeat_wdg_job();
+  schedule_state_interval_job();
+  schedule_foo_interval_job();
+  schedule_bar_interval_job();
+  schedule_baz_interval_job();
+  schedule_foobar_interval_job();
 
 }
 static uint32_t DMAMEM __oe_config_hash_send_fragmentation_buffer[2];
@@ -720,7 +942,7 @@ void canzero_send_config_hash() {
   msg.m_header.m_toggle = 0;
   msg.m_header.m_od_index = 0;
   msg.m_header.m_client_id = 255;
-  msg.m_header.m_server_id = node_id_test1;
+  msg.m_header.m_server_id = node_id_telemetry_board;
   canzero_frame sender_frame;
   canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
   canzero_can0_send(&sender_frame);
@@ -742,22 +964,74 @@ void canzero_send_build_time() {
   msg.m_header.m_toggle = 0;
   msg.m_header.m_od_index = 1;
   msg.m_header.m_client_id = 255;
-  msg.m_header.m_server_id = node_id_test1;
+  msg.m_header.m_server_id = node_id_telemetry_board;
   canzero_frame sender_frame;
   canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
   canzero_can0_send(&sender_frame);
   schedule_get_resp_fragmentation_job(__oe_build_time_send_fragmentation_buffer, 2, 1, 255);
 
 }
-void canzero_send_x() {
+void canzero_send_telemetry_state() {
   canzero_message_get_resp msg;
-  msg.m_data |= ((uint32_t)(__oe_x & (0xFF >> (8 - 8)))) << 0;
+  msg.m_data |= ((uint32_t)(((uint8_t)__oe_telemetry_state) & (0xFF >> (8 - 1)))) << 0;
   msg.m_header.m_eof = 1;
   msg.m_header.m_sof = 1;
   msg.m_header.m_toggle = 0;
   msg.m_header.m_od_index = 2;
   msg.m_header.m_client_id = 255;
-  msg.m_header.m_server_id = node_id_test1;
+  msg.m_header.m_server_id = node_id_telemetry_board;
+  canzero_frame sender_frame;
+  canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
+  canzero_can0_send(&sender_frame);
+}
+void canzero_send_foo() {
+  canzero_message_get_resp msg;
+  msg.m_data |= (__oe_foo & (0xFFFFFFFF >> (32 - 32))) << 0;
+  msg.m_header.m_eof = 1;
+  msg.m_header.m_sof = 1;
+  msg.m_header.m_toggle = 0;
+  msg.m_header.m_od_index = 3;
+  msg.m_header.m_client_id = 255;
+  msg.m_header.m_server_id = node_id_telemetry_board;
+  canzero_frame sender_frame;
+  canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
+  canzero_can0_send(&sender_frame);
+}
+void canzero_send_bar() {
+  canzero_message_get_resp msg;
+  msg.m_data |= (__oe_bar & (0xFFFFFFFF >> (32 - 32))) << 0;
+  msg.m_header.m_eof = 1;
+  msg.m_header.m_sof = 1;
+  msg.m_header.m_toggle = 0;
+  msg.m_header.m_od_index = 4;
+  msg.m_header.m_client_id = 255;
+  msg.m_header.m_server_id = node_id_telemetry_board;
+  canzero_frame sender_frame;
+  canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
+  canzero_can0_send(&sender_frame);
+}
+void canzero_send_baz() {
+  canzero_message_get_resp msg;
+  msg.m_data |= (__oe_baz & (0xFFFFFFFF >> (32 - 32))) << 0;
+  msg.m_header.m_eof = 1;
+  msg.m_header.m_sof = 1;
+  msg.m_header.m_toggle = 0;
+  msg.m_header.m_od_index = 5;
+  msg.m_header.m_client_id = 255;
+  msg.m_header.m_server_id = node_id_telemetry_board;
+  canzero_frame sender_frame;
+  canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
+  canzero_can0_send(&sender_frame);
+}
+void canzero_send_foobar() {
+  canzero_message_get_resp msg;
+  msg.m_data |= (__oe_foobar & (0xFFFFFFFF >> (32 - 32))) << 0;
+  msg.m_header.m_eof = 1;
+  msg.m_header.m_sof = 1;
+  msg.m_header.m_toggle = 0;
+  msg.m_header.m_od_index = 6;
+  msg.m_header.m_client_id = 255;
+  msg.m_header.m_server_id = node_id_telemetry_board;
   canzero_frame sender_frame;
   canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
   canzero_can0_send(&sender_frame);

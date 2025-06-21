@@ -6,10 +6,8 @@ namespace canzero::telemetry::server {
 
 void begin(ServerInfo* serverInfo);
 
-bool can0_recv(canzero_frame *frame);
-bool can1_recv(canzero_frame *frame);
-bool can0_send(canzero_frame *frame);
-bool can1_send(canzero_frame *frame);
+bool can_recv(uint8_t bus, canzero_frame *frame);
+bool can_send(uint8_t bus, canzero_frame *frame);
 
 void update();
 

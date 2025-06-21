@@ -9,7 +9,6 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <optional>
-#include <print>
 #include <stdexcept>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -31,17 +30,7 @@ TcpServer::TcpServer(std::size_t maxPacketSize, std::uint16_t port)
   internals->welcomeFd = -1;
 }
 
-TcpServer::~TcpServer() {
-  if (m_internals != nullptr) {
-    auto internals = reinterpret_cast<LinuxTcpServer *>(m_internals);
-
-    if (internals->welcomeFd != -1) {
-      close(internals->welcomeFd);
-    }
-
-    free(m_internals);
-  }
-}
+TcpServer::~TcpServer() { close(); }
 
 void TcpServer::start() {
   auto internals = reinterpret_cast<LinuxTcpServer *>(m_internals);
@@ -66,12 +55,12 @@ void TcpServer::start() {
   addr.sin_port = htons(internals->welcomePort); // 0 means "any port"
 
   if (bind(fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) < 0) {
-    close(fd);
+    ::close(fd);
     throw std::runtime_error("Failed to bind TCP socket");
   }
 
   if (::listen(fd, 1) < 0) {
-    close(fd);
+    ::close(fd);
     throw std::runtime_error("Failed to listen on TCP socket");
   }
 
@@ -130,7 +119,20 @@ std::optional<TcpConnection> TcpServer::accept() {
   return std::move(x);
 }
 
-TcpConnection::TcpConnection(void *internals) : m_internals(internals) {}
+void TcpServer::close() {
+  if (m_internals != nullptr) {
+    auto internals = reinterpret_cast<LinuxTcpServer *>(m_internals);
+
+    if (internals->welcomeFd != -1) {
+      ::close(internals->welcomeFd);
+    }
+
+    free(m_internals);
+  }
+}
+
+TcpConnection::TcpConnection(void *internals) : m_internals(internals) {
+}
 
 TcpConnection::~TcpConnection() {
   if (m_internals != nullptr) {
@@ -140,7 +142,6 @@ TcpConnection::~TcpConnection() {
 }
 
 void TcpConnection::close() {
-  std::println("Closing TcpConnection");
   if (m_internals != nullptr) {
     auto internals = reinterpret_cast<LinuxTcpConnection *>(m_internals);
     if (internals->connectionFd != -1) {
@@ -150,7 +151,7 @@ void TcpConnection::close() {
   }
 }
 
-TcpSendInfo TcpConnection::send(void *data, std::size_t size) {
+TcpSendInfo TcpConnection::send(const void *data, std::size_t size) {
   auto internals = reinterpret_cast<LinuxTcpConnection *>(m_internals);
   assert(internals->connectionFd != -1);
 

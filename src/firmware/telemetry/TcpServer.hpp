@@ -1,19 +1,23 @@
 #pragma once
 
+#include "firmware/telemetry/SocketAddr.hpp"
+#include "print.h"
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <utility>
+
 namespace telemetry_board {
 
-enum class TcpRecvInfo {
+enum class TcpRecvResult {
   CLOSED,
   EMPTY,
   SUCC,
 };
 
-enum class TcpSendInfo {
+enum class TcpSendResult {
   CLOSED,
-  SKIPPED,
+  WOULD_BLOCK,
   SUCC,
 };
 
@@ -22,29 +26,32 @@ public:
   friend class TcpServer;
   TcpConnection() : m_internals(nullptr) {}
   ~TcpConnection();
+
   TcpConnection(const TcpConnection &) = delete;
   TcpConnection &operator=(const TcpConnection &) = delete;
-  __attribute__((weak)) TcpConnection(TcpConnection &&o)
-      : m_internals(o.m_internals) {
-    o.m_internals = nullptr;
-  }
-  __attribute__((weak)) TcpConnection &operator=(TcpConnection &&o) {
+
+  TcpConnection(TcpConnection &&o)
+      : m_internals(std::exchange(o.m_internals, nullptr)) {}
+
+  TcpConnection &operator=(TcpConnection &&o) {
     if (this == &o) {
       return *this;
     }
-    this->~TcpConnection(); // hacky
-    m_internals = o.m_internals;
-    o.m_internals = nullptr;
+    close();
+    m_internals = std::exchange(o.m_internals, nullptr);
     return *this;
   }
 
-  TcpSendInfo send(void *data, std::size_t size);
-  TcpRecvInfo recv(void *data, std::size_t size);
+  TcpSendResult send_exact(const void *data, std::size_t size);
+
+  TcpRecvResult recv_exact(void *data, std::size_t size);
+
+  SocketAddr remoteAddr() const;
 
   void close();
 
 private:
-  TcpConnection(void *internals);
+  TcpConnection(void *internals) : m_internals(internals) {}
   void *m_internals;
 };
 
@@ -58,18 +65,20 @@ public:
   TcpServer(TcpServer &&o) : m_internals(o.m_internals) {
     o.m_internals = nullptr;
   }
-  TcpServer &operator=(TcpServer && o) {
+  TcpServer &operator=(TcpServer &&o) {
     if (this == &o) {
       return *this;
     }
-    this->~TcpServer();
-    std::swap(m_internals, o.m_internals);
+    close();
+    m_internals = std::exchange(o.m_internals, nullptr);
     return *this;
   }
 
   ~TcpServer();
 
   void start(); // Create tcp welcome socket
+
+  void close();
 
   std::uint16_t welcomePort();
 

@@ -35,8 +35,7 @@ template <typename T, std::size_t SIZE> struct CyclicBuffer {
     if (r == w) {
       return std::nullopt;
     }
-    T ret = m_buffer[r];
-    r++;
+    T ret = m_buffer[r++];
     if (r == SIZE) {
       r = 0U;
     }

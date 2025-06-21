@@ -5,18 +5,18 @@
 #define MAX_DYN_HEARTBEATS 10
 typedef enum {
   node_id_gamepad = 0,
-  node_id_mother_board = 1,
-  node_id_motor_driver = 2,
-  node_id_guidance_board_front = 3,
-  node_id_guidance_board_back = 4,
-  node_id_levitation_board1 = 5,
-  node_id_levitation_board2 = 6,
-  node_id_levitation_board3 = 7,
-  node_id_input_board = 8,
-  node_id_power_board12 = 9,
-  node_id_power_board24 = 10,
-  node_id_led_board = 11,
-  node_id_test1 = 12,
+  node_id_telemetry_board = 1,
+  node_id_mother_board = 2,
+  node_id_motor_driver = 3,
+  node_id_guidance_board_front = 4,
+  node_id_guidance_board_back = 5,
+  node_id_levitation_board1 = 6,
+  node_id_levitation_board2 = 7,
+  node_id_levitation_board3 = 8,
+  node_id_input_board = 9,
+  node_id_power_board12 = 10,
+  node_id_power_board24 = 11,
+  node_id_led_board = 12,
   node_id_count = 13,
 } node_id;
 typedef struct {
@@ -50,6 +50,10 @@ typedef struct {
   uint8_t m_server_id;
   set_resp_erno m_erno;
 } set_resp_header;
+typedef enum {
+  telemetry_state_DISCONNECTED = 0,
+  telemetry_state_CONNECTED = 1,
+} telemetry_state;
 typedef struct {
   uint16_t m_year;
   uint8_t m_month;
@@ -58,11 +62,11 @@ typedef struct {
   uint8_t m_min;
   uint8_t m_sec;
 } date_time;
-static const node_id CANZERO_NODE_ID = node_id_test1;
+static const node_id CANZERO_NODE_ID = node_id_telemetry_board;
 typedef struct {
   uint32_t id;
   uint8_t dlc;
-  uint8_t data[8];
+  __attribute__((aligned(alignof(uint64_t)))) uint8_t data[8];
 } canzero_frame;
 typedef enum : uint32_t {
   CANZERO_FRAME_IDE_BIT = 0x40000000, // 1 << 30
@@ -90,40 +94,76 @@ static inline date_time canzero_get_build_time() {
   extern date_time __oe_build_time;
   return __oe_build_time;
 }
-static inline uint8_t canzero_get_x() {
-  extern uint8_t __oe_x;
-  return __oe_x;
+static inline telemetry_state canzero_get_telemetry_state() {
+  extern telemetry_state __oe_telemetry_state;
+  return __oe_telemetry_state;
+}
+static inline uint32_t canzero_get_foo() {
+  extern uint32_t __oe_foo;
+  return __oe_foo;
+}
+static inline uint32_t canzero_get_bar() {
+  extern uint32_t __oe_bar;
+  return __oe_bar;
+}
+static inline uint32_t canzero_get_baz() {
+  extern uint32_t __oe_baz;
+  return __oe_baz;
+}
+static inline uint32_t canzero_get_foobar() {
+  extern uint32_t __oe_foobar;
+  return __oe_foobar;
 }
 typedef struct {
   get_resp_header m_header;
   uint32_t m_data;
 } canzero_message_get_resp;
-static const uint32_t canzero_message_get_resp_id = 0x19D;
+static const uint32_t canzero_message_get_resp_id = 0x1BD;
 typedef struct {
   set_resp_header m_header;
 } canzero_message_set_resp;
-static const uint32_t canzero_message_set_resp_id = 0x1BD;
+static const uint32_t canzero_message_set_resp_id = 0x1DD;
+typedef struct {
+  telemetry_state m_telemetry_state;
+} canzero_message_telemetry_board_stream_state;
+static const uint32_t canzero_message_telemetry_board_stream_state_id = 0xD8;
+typedef struct {
+  uint32_t m_foo;
+} canzero_message_telemetry_board_stream_foo;
+static const uint32_t canzero_message_telemetry_board_stream_foo_id = 0x98;
+typedef struct {
+  uint32_t m_bar;
+} canzero_message_telemetry_board_stream_bar;
+static const uint32_t canzero_message_telemetry_board_stream_bar_id = 0x58;
+typedef struct {
+  uint32_t m_baz;
+} canzero_message_telemetry_board_stream_baz;
+static const uint32_t canzero_message_telemetry_board_stream_baz_id = 0x78;
+typedef struct {
+  uint32_t m_foobar;
+} canzero_message_telemetry_board_stream_foobar;
+static const uint32_t canzero_message_telemetry_board_stream_foobar_id = 0xB8;
 typedef struct {
   uint8_t m_node_id;
   uint8_t m_unregister;
   uint8_t m_ticks_next;
 } canzero_message_heartbeat_can0;
-static const uint32_t canzero_message_heartbeat_can0_id = 0x1D4;
+static const uint32_t canzero_message_heartbeat_can0_id = 0x1F4;
 typedef struct {
   uint8_t m_node_id;
   uint8_t m_unregister;
   uint8_t m_ticks_next;
 } canzero_message_heartbeat_can1;
-static const uint32_t canzero_message_heartbeat_can1_id = 0x1D3;
+static const uint32_t canzero_message_heartbeat_can1_id = 0x1F3;
 typedef struct {
   get_req_header m_header;
 } canzero_message_get_req;
-static const uint32_t canzero_message_get_req_id = 0x19E;
+static const uint32_t canzero_message_get_req_id = 0x1BE;
 typedef struct {
   set_req_header m_header;
   uint32_t m_data;
 } canzero_message_set_req;
-static const uint32_t canzero_message_set_req_id = 0x1BE;
+static const uint32_t canzero_message_set_req_id = 0x1DE;
 void canzero_can0_poll();
 void canzero_can1_poll();
 uint32_t canzero_update_continue(uint32_t delta_time);
@@ -138,15 +178,43 @@ static inline void canzero_set_build_time(date_time value){
   __oe_build_time = value;
 }
 
-static inline void canzero_set_x(uint8_t value){
-  extern uint8_t __oe_x;
-  __oe_x = value;
+static inline void canzero_set_telemetry_state(telemetry_state value){
+  extern telemetry_state __oe_telemetry_state;
+  __oe_telemetry_state = value;
+}
+
+static inline void canzero_set_foo(uint32_t value){
+  extern uint32_t __oe_foo;
+  __oe_foo = value;
+}
+
+static inline void canzero_set_bar(uint32_t value){
+  extern uint32_t __oe_bar;
+  __oe_bar = value;
+}
+
+static inline void canzero_set_baz(uint32_t value){
+  extern uint32_t __oe_baz;
+  __oe_baz = value;
+}
+
+static inline void canzero_set_foobar(uint32_t value){
+  extern uint32_t __oe_foobar;
+  __oe_foobar = value;
 }
 
 void canzero_send_config_hash();
 
 void canzero_send_build_time();
 
-void canzero_send_x();
+void canzero_send_telemetry_state();
+
+void canzero_send_foo();
+
+void canzero_send_bar();
+
+void canzero_send_baz();
+
+void canzero_send_foobar();
 
 #endif

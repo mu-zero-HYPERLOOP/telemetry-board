@@ -1,118 +1,162 @@
 #include "./server.h"
+#include "QNEthernet.h"
+#include "can_bus_count.hpp"
 #include "canzero/canzero.h"
 #include "canzero/telemetry/connection.h"
+#include "canzero/telemetry/ip_host.h"
 #include "canzero/telemetry/packets.h"
+#include "canzero/telemetry/server_config.h"
 #include "canzero/telemetry/server_info.hpp"
+#include "core_pins.h"
+#include "firmware/telemetry/SocketAddr.hpp"
 #include "firmware/telemetry/TcpServer.hpp"
+#include "print.h"
 #include "util/cyclic_buffer.h"
-#include "util/timestamped.h"
-#include <print>
+#include "util/static_bag.h"
+#include "util/timing.h"
+#include <algorithm>
+#include <cstring>
 
 namespace canzero::telemetry::server {
 
 static const ServerInfo *serverInfo;
 static telemetry_board::TcpServer tcpServer;
 
-std::optional<Connection> connection;
+StaticBag<Connection, MAX_AMOUNT_OF_CONNECTIONS> connections;
 
-constexpr std::size_t RX_BUFFER_SIZE = 32;
+static ConnectionIdHost connectionIdHost;
 
-static CyclicBuffer<canzero_frame, RX_BUFFER_SIZE> can0_rxQueue;
-static CyclicBuffer<canzero_frame, RX_BUFFER_SIZE> can1_rxQueue;
-
-constexpr std::size_t TX_BUFFER_SIZE = 32;
-static CyclicBuffer<Timestamped<canzero_frame>, TX_BUFFER_SIZE> can0_txQueue;
-static CyclicBuffer<Timestamped<canzero_frame>, TX_BUFFER_SIZE> can1_txQueue;
+// TODO useless indirection (i think, unless we want to broadcast to other
+// connections as well).
+static constexpr std::size_t RX_QUEUE_SIZE = 4096;
+std::array<CyclicBuffer<canzero_frame, RX_QUEUE_SIZE>, CAN_BUS_COUNT>
+    can_rxQueues;
 
 void begin(ServerInfo *info) {
   serverInfo = info;
-  tcpServer = std::move(telemetry_board::TcpServer(
+  tcpServer = telemetry_board::TcpServer(
       std::max(sizeof(HandshakePacket), sizeof(Packet)),
-      serverInfo->servicePort));
+      serverInfo->servicePort);
+  debugPrintFlush();
   tcpServer.start();
   info->servicePort = tcpServer.welcomePort();
 
-  std::println("Started server at port={}", info->servicePort);
-}
-
-bool can0_recv(canzero_frame *frame) {
-  const auto opt = can0_rxQueue.dequeue();
-  if (opt.has_value()) {
-    *frame = *opt;
-    return true;
-  } else {
-    return false;
+  debugPrintf("Started TCP-Server:\n");
+  {
+    char cServiceName[128];
+    std::memset(cServiceName, 0, 128);
+    std::memcpy(cServiceName, info->serviceName.data(),
+                info->serviceName.size() * sizeof(char));
+    debugPrintf(" - service-name : %s\n", cServiceName);
+  }
+  debugPrintf(" - port : %d\n", info->servicePort);
+  debugPrintf(" - config-hash : %d\n", info->networkHash);
+  {
+    char cBuildTime[128];
+    std::memset(cBuildTime, 0, 128);
+    std::memcpy(cBuildTime, info->buildTime.data(),
+                info->buildTime.size() * sizeof(char));
+    debugPrintf(" - build-time : %s\n", cBuildTime);
+    debugPrintf(" - supports : [idreq]\n");
+    debugPrintf(" - not_supported : [sync]\n");
   }
 }
 
-bool can1_recv(canzero_frame *frame) {
-  const auto opt = can1_rxQueue.dequeue();
+bool can_recv(uint8_t bus, canzero_frame *frame) {
+  assert(bus < CAN_BUS_COUNT);
+  const auto opt = can_rxQueues[bus].dequeue();
   if (opt.has_value()) {
-    *frame = *opt;
+    *frame = opt.value();
     return true;
-  } else {
-    return false;
   }
+  return false;
 }
 
-bool can0_send(canzero_frame *frame) {
-  return can0_txQueue.enqueue(Timestamped<canzero_frame>::now(*frame));
+bool can_send(uint8_t bus, canzero_frame *frame) {
+  Timing timing;
+  timing.start();
+  assert(bus < CAN_BUS_COUNT);
+  const auto time = Timestamp::now() - serverInfo->timebase;
+  const Packet packet = Packet::createNetworkFrame(bus, frame, time.as_us());
+  bool succ = true;
+  for (std::uint32_t i = 0; i < connections.size(); ++i) {
+    auto &connection = connections[i];
+    if (!connection.send(&packet)) {
+      succ = false;
+    }
+  }
+  // debugPrintf("server::can_send took %dus\n", timing.time().as_us());
+  return succ;
 }
 
-bool can1_send(canzero_frame *frame) {
-  return can1_txQueue.enqueue(Timestamped<canzero_frame>::now(*frame));
+static bool allRxQueuesHaveSpace() {
+  return std::all_of(can_rxQueues.begin(), can_rxQueues.end(),
+                     [](auto &q) { return q.hasSpace(); });
 }
 
 void update() {
-  if (!connection.has_value()) {
+  // debugPrintf("Update server\n");
+
+  if (connections.size() < MAX_AMOUNT_OF_CONNECTIONS) {
     auto newConnection = tcpServer.accept();
+
     if (newConnection.has_value()) {
-      std::println("New connection!");
-      connection.emplace(std::move(*newConnection));
+      debugPrintf("[TCP-Server] New connection from ");
+      telemetry_board::printSocketAddress(newConnection->remoteAddr());
+      debugPrintf("\n");
+      connections.add(Connection(std::move(*newConnection), &connectionIdHost));
     }
   }
 
-  if (connection.has_value()) {
-    // Receiving frames
-    canzero_frame frame;
-    std::uint8_t bus;
-    bool rxQueueSpace = can0_rxQueue.hasSpace() && can1_rxQueue.hasSpace();
-    while (rxQueueSpace && connection->recv(&bus, &frame)) {
-      if (bus == 0) {
-        can0_rxQueue.enqueue(frame);
-        rxQueueSpace &= can0_rxQueue.hasSpace();
-      } else if (bus == 1) {
-        can1_rxQueue.enqueue(frame);
-        rxQueueSpace &= can0_rxQueue.hasSpace();
+  for (std::uint32_t i = 0; i < connections.size(); ++i) {
+    auto &connection = connections[i];
+
+    {
+      Timing timing;
+      timing.start();
+      connection.update();
+      if (timing.time() > 1_ms) {
+        debugPrintf("server::update update connection took %dus\n",
+                    timing.time().as_us());
+      }
+    }
+
+    qindesign::network::Ethernet.loop();
+
+    if (connection.closed()) {
+      debugPrintf("[TCP-Server] Closed connection from ");
+      telemetry_board::printSocketAddress(connection.remoteAddr());
+      debugPrintf("\n");
+      connections.remove(i);
+      i--;
+      continue;
+    }
+
+    Packet packet;
+    while (allRxQueuesHaveSpace() && connection.recv(&packet)) {
+      // forward to other clients
+      for (std::uint32_t j = 0; j < connections.size(); ++j) {
+        if (j == i) {
+          continue;
+        }
+        auto &peer = connections[j];
+        (void)peer.send(&packet);
+      }
+
+      // forward to application layer
+      canzero_frame frame;
+      frame.id = packet.canId;
+      frame.dlc = packet.dlc;
+      std::memcpy(frame.data, &packet.data, sizeof(std::uint64_t));
+      if (packet.bus < CAN_BUS_COUNT) {
+        can_rxQueues[packet.bus].enqueue(frame);
       } else {
-        connection->close();
+        // Warning: Received invalid tcp frame.
       }
     }
 
-    // Sending frames
-    std::optional<Timestamped<canzero_frame>> tframe;
-    while ((tframe = can0_txQueue.peek()).has_value()) {
-      auto time = static_cast<uint64_t>(
-          static_cast<std::uint32_t>(tframe->timestamp()));
-      bool ok = connection->send(0, &tframe->value(), time);
-      if (ok) { can0_txQueue.dequeue(); }
-      else {
-        break;
-      }
-    }
-
-    while ((tframe = can1_txQueue.peek()).has_value()) {
-      auto time = static_cast<uint64_t>(
-          static_cast<std::uint32_t>(tframe->timestamp()));
-      bool ok = connection->send(1, &tframe->value(), time);
-      if (ok) { can1_txQueue.dequeue(); }
-      else {
-        break;
-      }
-    }
-
-    if (connection->closed()) {
-      connection.reset();
+    if (!allRxQueuesHaveSpace()) {
+      debugPrintf("Blocked by rx queue length\n");
     }
   }
 }
