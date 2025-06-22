@@ -3,7 +3,8 @@
 #include "util/timestamp.h"
 #include <cstdint>
 #include <string_view>
-namespace canzero::telemetry { 
+
+namespace telemetry { 
 
 struct ServerInfo {
   Timestamp timebase;

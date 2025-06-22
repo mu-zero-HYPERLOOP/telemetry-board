@@ -51,8 +51,10 @@ typedef struct {
   set_resp_erno m_erno;
 } set_resp_header;
 typedef enum {
-  telemetry_state_DISCONNECTED = 0,
-  telemetry_state_CONNECTED = 1,
+  telemetry_state_INIT = 0,
+  telemetry_state_DISCONNECTED = 1,
+  telemetry_state_LISTENING = 2,
+  telemetry_state_CLIENT_CONNECTED = 3,
 } telemetry_state;
 typedef struct {
   uint16_t m_year;
@@ -98,21 +100,45 @@ static inline telemetry_state canzero_get_telemetry_state() {
   extern telemetry_state __oe_telemetry_state;
   return __oe_telemetry_state;
 }
-static inline uint32_t canzero_get_foo() {
-  extern uint32_t __oe_foo;
-  return __oe_foo;
+static inline uint16_t canzero_get_dropped_tx_packets() {
+  extern uint16_t __oe_dropped_tx_packets;
+  return __oe_dropped_tx_packets;
 }
-static inline uint32_t canzero_get_bar() {
-  extern uint32_t __oe_bar;
-  return __oe_bar;
+static inline uint16_t canzero_get_dropped_rx_packets() {
+  extern uint16_t __oe_dropped_rx_packets;
+  return __oe_dropped_rx_packets;
 }
-static inline uint32_t canzero_get_baz() {
-  extern uint32_t __oe_baz;
-  return __oe_baz;
+static inline uint16_t canzero_get_dropped_tx_canframes() {
+  extern uint16_t __oe_dropped_tx_canframes;
+  return __oe_dropped_tx_canframes;
 }
-static inline uint32_t canzero_get_foobar() {
-  extern uint32_t __oe_foobar;
-  return __oe_foobar;
+static inline uint16_t canzero_get_dropped_rx_canframes() {
+  extern uint16_t __oe_dropped_rx_canframes;
+  return __oe_dropped_rx_canframes;
+}
+static inline float canzero_get_telemetry_tx_memory_throughput() {
+  extern float __oe_telemetry_tx_memory_throughput;
+  return __oe_telemetry_tx_memory_throughput;
+}
+static inline float canzero_get_telemetry_rx_memory_throughput() {
+  extern float __oe_telemetry_rx_memory_throughput;
+  return __oe_telemetry_rx_memory_throughput;
+}
+static inline uint8_t canzero_get_active_connections() {
+  extern uint8_t __oe_active_connections;
+  return __oe_active_connections;
+}
+static inline uint8_t canzero_get_accepts_new_connections() {
+  extern uint8_t __oe_accepts_new_connections;
+  return __oe_accepts_new_connections;
+}
+static inline float canzero_get_loop_frequency() {
+  extern float __oe_loop_frequency;
+  return __oe_loop_frequency;
+}
+static inline uint64_t canzero_get_test() {
+  extern uint64_t __oe_test;
+  return __oe_test;
 }
 typedef struct {
   get_resp_header m_header;
@@ -125,24 +151,30 @@ typedef struct {
 static const uint32_t canzero_message_set_resp_id = 0x1DD;
 typedef struct {
   telemetry_state m_telemetry_state;
+  uint8_t m_active_connections;
+  uint8_t m_accepts_new_connections;
 } canzero_message_telemetry_board_stream_state;
-static const uint32_t canzero_message_telemetry_board_stream_state_id = 0xD8;
+static const uint32_t canzero_message_telemetry_board_stream_state_id = 0x98;
 typedef struct {
-  uint32_t m_foo;
-} canzero_message_telemetry_board_stream_foo;
-static const uint32_t canzero_message_telemetry_board_stream_foo_id = 0x98;
+  float m_telemetry_tx_memory_throughput;
+  float m_telemetry_rx_memory_throughput;
+} canzero_message_telemetry_board_stream_telemetry_bandwidth;
+static const uint32_t canzero_message_telemetry_board_stream_telemetry_bandwidth_id = 0xB8;
 typedef struct {
-  uint32_t m_bar;
-} canzero_message_telemetry_board_stream_bar;
-static const uint32_t canzero_message_telemetry_board_stream_bar_id = 0x58;
+  uint16_t m_dropped_tx_packets;
+  uint16_t m_dropped_rx_packets;
+  uint16_t m_dropped_tx_canframes;
+  uint16_t m_dropped_rx_canframes;
+} canzero_message_telemetry_board_stream_dropped_frames;
+static const uint32_t canzero_message_telemetry_board_stream_dropped_frames_id = 0x58;
 typedef struct {
-  uint32_t m_baz;
-} canzero_message_telemetry_board_stream_baz;
-static const uint32_t canzero_message_telemetry_board_stream_baz_id = 0x78;
+  float m_loop_frequency;
+} canzero_message_telemetry_board_stream_loop_frequency;
+static const uint32_t canzero_message_telemetry_board_stream_loop_frequency_id = 0x78;
 typedef struct {
-  uint32_t m_foobar;
-} canzero_message_telemetry_board_stream_foobar;
-static const uint32_t canzero_message_telemetry_board_stream_foobar_id = 0xB8;
+  uint64_t m_test;
+} canzero_message_telemetry_board_stream_test;
+static const uint32_t canzero_message_telemetry_board_stream_test_id = 0xD8;
 typedef struct {
   uint8_t m_node_id;
   uint8_t m_unregister;
@@ -178,29 +210,38 @@ static inline void canzero_set_build_time(date_time value){
   __oe_build_time = value;
 }
 
-static inline void canzero_set_telemetry_state(telemetry_state value){
-  extern telemetry_state __oe_telemetry_state;
-  __oe_telemetry_state = value;
+void canzero_set_telemetry_state(telemetry_state value);
+
+void canzero_set_dropped_tx_packets(uint16_t value);
+
+void canzero_set_dropped_rx_packets(uint16_t value);
+
+void canzero_set_dropped_tx_canframes(uint16_t value);
+
+void canzero_set_dropped_rx_canframes(uint16_t value);
+
+static inline void canzero_set_telemetry_tx_memory_throughput(float value){
+  extern float __oe_telemetry_tx_memory_throughput;
+  __oe_telemetry_tx_memory_throughput = value;
 }
 
-static inline void canzero_set_foo(uint32_t value){
-  extern uint32_t __oe_foo;
-  __oe_foo = value;
+static inline void canzero_set_telemetry_rx_memory_throughput(float value){
+  extern float __oe_telemetry_rx_memory_throughput;
+  __oe_telemetry_rx_memory_throughput = value;
 }
 
-static inline void canzero_set_bar(uint32_t value){
-  extern uint32_t __oe_bar;
-  __oe_bar = value;
+void canzero_set_active_connections(uint8_t value);
+
+void canzero_set_accepts_new_connections(uint8_t value);
+
+static inline void canzero_set_loop_frequency(float value){
+  extern float __oe_loop_frequency;
+  __oe_loop_frequency = value;
 }
 
-static inline void canzero_set_baz(uint32_t value){
-  extern uint32_t __oe_baz;
-  __oe_baz = value;
-}
-
-static inline void canzero_set_foobar(uint32_t value){
-  extern uint32_t __oe_foobar;
-  __oe_foobar = value;
+static inline void canzero_set_test(uint64_t value){
+  extern uint64_t __oe_test;
+  __oe_test = value;
 }
 
 void canzero_send_config_hash();
@@ -209,12 +250,24 @@ void canzero_send_build_time();
 
 void canzero_send_telemetry_state();
 
-void canzero_send_foo();
+void canzero_send_dropped_tx_packets();
 
-void canzero_send_bar();
+void canzero_send_dropped_rx_packets();
 
-void canzero_send_baz();
+void canzero_send_dropped_tx_canframes();
 
-void canzero_send_foobar();
+void canzero_send_dropped_rx_canframes();
+
+void canzero_send_telemetry_tx_memory_throughput();
+
+void canzero_send_telemetry_rx_memory_throughput();
+
+void canzero_send_active_connections();
+
+void canzero_send_accepts_new_connections();
+
+void canzero_send_loop_frequency();
+
+void canzero_send_test();
 
 #endif

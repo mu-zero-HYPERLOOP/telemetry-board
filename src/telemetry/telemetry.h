@@ -3,7 +3,7 @@
 #include "canzero/canzero.h"
 #include <inttypes.h>
 
-namespace canzero::telemetry {
+namespace telemetry {
 
 void begin();
 

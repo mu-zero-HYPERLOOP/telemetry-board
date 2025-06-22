@@ -3,7 +3,7 @@
 #include "canzero/canzero.h"
 #include <cstdint>
 #include <cstring>
-namespace canzero::telemetry {
+namespace telemetry {
 
 struct HandshakePacket {
   std::uint16_t tag : 4;

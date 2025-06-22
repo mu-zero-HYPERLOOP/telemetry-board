@@ -1,77 +1,72 @@
 #include "bridge.hpp"
+#include "can_defaults.h"
 #include "canzero/canzero.h"
-#include "canzero/telemetry/telemetry.h"
+#include "core_pins.h"
+#include "firmware/can/can.hpp"
 #include "firmware/telemetry_board.hpp"
+#include "pins_arduino.h"
 #include "print.h"
+#include "telemetry/telemetry.h"
+#include "usb_serial.h"
 #include "util/interval.h"
 #include "util/timing.h"
-#include <Arduino.h>
 #include <cassert>
 
-int main() {
-  Serial.begin(9600);
 
+int main() {
   telemetry_board::delay(3_s);
 
+  // start firmware.
   telemetry_board::begin();
 
+
+  // initalize telemetry (i.e. UDP / TCP servers)
+  telemetry::begin();
+
+  // initalize bridge
+  // - connect telemetry with the canzero transport layer.
   bridge::begin();
 
-  canzero::telemetry::begin();
-
-  IntervalTiming loopItervalTimer;
-  Interval logInterval{10_s};
-
+  // initalize canzero.
+  // After this call blocking considered an error!
+  // - calls into static hooks, which directly initalize physical can
+  //   correctly. (These hooks are defined in bridge.cpp)
   canzero_init();
+  can_defaults();
+
+  // set can defaults.
   canzero_update_continue(canzero_get_time());
 
-  while (true) {
-    Timing timing;
-    timing.start();
 
+
+  IntervalTiming loopIntervalTiming;
+
+  while (true) {
+    // send canzero_frames
+    canzero_update_continue(canzero_get_time());
+
+    // update firmware (i.e. receive from / send on ethernet).
+    telemetry_board::update();
+
+    // receive and process incomming packets and datagrams.
+    telemetry::update();
+
+    // forward canzero_frames:
+    // - from any telemetry connection:
+    //   - to the canzero transport layer
+    //   - to the physical can.
+    // - from the physical can
+    //   - to the canzero transport layer
+    //   - to all connected telemetry connections.
+    bridge::update();
+
+    // canzero transport layer processes incomming canzero_frames
+    // (either from physical can or from telemetry).
     canzero_can0_poll();
     canzero_can1_poll();
 
-    {
-      Timing timing;
-      timing.start();
-      telemetry_board::update();
-
-      if (timing.time() > 1_ms) {
-        debugPrintf("firmware::update took %dus\n", timing.time().as_us());
-      }
-    }
-    {
-      Timing timing;
-      timing.start();
-      canzero::telemetry::update();
-      if (timing.time() > 1_ms) {
-        debugPrintf("canzero::telemetry::update took %dus\n",
-                    timing.time().as_us());
-      }
-    }
-    {
-      Timing timing;
-      timing.start();
-      bridge::update();
-      if (timing.time() > 1_ms) {
-        debugPrintf("bridge::update took %dus\n", timing.time().as_us());
-      }
-
-    }
-
-    canzero_update_continue(canzero_get_time());
-
-    loopItervalTimer.tick();
-
-    if (logInterval.next()) {
-      debugPrintf("Loop-Interval: %fHz\n",
-                  static_cast<float>(loopItervalTimer.frequency()));
-    }
-
-    if (timing.time() > 1_ms) {
-      debugPrintf("Slow loop : %fms", timing.time().as_us() * 1e-3);
-      assert(false);
-    }
+    loopIntervalTiming.tick();
+    canzero_set_loop_frequency(loopIntervalTiming.frequency() / 1_kHz);
+         
   }
 }

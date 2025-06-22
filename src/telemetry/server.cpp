@@ -1,23 +1,24 @@
 #include "./server.h"
 #include "QNEthernet.h"
-#include "can_bus_count.hpp"
 #include "canzero/canzero.h"
-#include "canzero/telemetry/connection.h"
-#include "canzero/telemetry/ip_host.h"
-#include "canzero/telemetry/packets.h"
-#include "canzero/telemetry/server_config.h"
-#include "canzero/telemetry/server_info.hpp"
 #include "core_pins.h"
+#include "firmware/can/can_bus_count.hpp"
 #include "firmware/telemetry/SocketAddr.hpp"
 #include "firmware/telemetry/TcpServer.hpp"
+#include "imxrt.h"
 #include "print.h"
+#include "telemetry/connection.h"
+#include "telemetry/ip_host.h"
+#include "telemetry/packets.h"
+#include "telemetry/server_config.h"
+#include "telemetry/server_info.hpp"
 #include "util/cyclic_buffer.h"
 #include "util/static_bag.h"
 #include "util/timing.h"
 #include <algorithm>
 #include <cstring>
 
-namespace canzero::telemetry::server {
+namespace telemetry::server {
 
 static const ServerInfo *serverInfo;
 static telemetry_board::TcpServer tcpServer;
@@ -62,6 +63,15 @@ void begin(ServerInfo *info) {
   }
 }
 
+void end() {
+  connections.clear();
+  for (auto &rxQueue : can_rxQueues) {
+    rxQueue.clear();
+  }
+  tcpServer.close();
+  connectionIdHost.reset();
+}
+
 bool can_recv(uint8_t bus, canzero_frame *frame) {
   assert(bus < CAN_BUS_COUNT);
   const auto opt = can_rxQueues[bus].dequeue();
@@ -73,8 +83,6 @@ bool can_recv(uint8_t bus, canzero_frame *frame) {
 }
 
 bool can_send(uint8_t bus, canzero_frame *frame) {
-  Timing timing;
-  timing.start();
   assert(bus < CAN_BUS_COUNT);
   const auto time = Timestamp::now() - serverInfo->timebase;
   const Packet packet = Packet::createNetworkFrame(bus, frame, time.as_us());
@@ -93,6 +101,10 @@ static bool allRxQueuesHaveSpace() {
   return std::all_of(can_rxQueues.begin(), can_rxQueues.end(),
                      [](auto &q) { return q.hasSpace(); });
 }
+
+uint8_t activeConnectionCount() { return connections.size(); }
+
+bool listening() { return connections.size() < MAX_AMOUNT_OF_CONNECTIONS; }
 
 void update() {
   // debugPrintf("Update server\n");
@@ -121,13 +133,18 @@ void update() {
       }
     }
 
-    qindesign::network::Ethernet.loop();
-
     if (connection.closed()) {
+      __disable_irq();
       debugPrintf("[TCP-Server] Closed connection from ");
       telemetry_board::printSocketAddress(connection.remoteAddr());
       debugPrintf("\n");
-      connections.remove(i);
+      // It's actually not interrupt save to do this because
+      // the link state might have changed and then the connections array is
+      // empty.
+      if (!connections.remove(i)) {
+        connections.clear();
+      }
+      __enable_irq();
       i--;
       continue;
     }
@@ -161,4 +178,4 @@ void update() {
   }
 }
 
-} // namespace canzero::telemetry::server
+} // namespace telemetry::server

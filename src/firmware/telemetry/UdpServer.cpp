@@ -59,4 +59,11 @@ bool UdpServer::recv(void *data, std::size_t size, SocketAddr *addr) {
   return true;
 }
 
+void UdpServer::close() {
+  if (m_internals != nullptr) {
+    auto internals = static_cast<TeensyUdpServer *>(m_internals);
+    internals->udpSocket.stop();
+  }
+}
+
 } // namespace telemetry_board

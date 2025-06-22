@@ -33,10 +33,15 @@ public:
     return true;
   }
 
-  void remove(std::uint32_t idx) {
-    assert(idx < m_size);
-    m_values[idx].value = std::move(m_values[--m_size].value);
-    std::destroy_at(&m_values[m_size].value);
+  bool remove(std::uint32_t idx) {
+    if (idx < m_size) {
+      assert(idx < m_size);
+      m_values[idx].value = std::move(m_values[--m_size].value);
+      std::destroy_at(&m_values[m_size].value);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   T &operator[](std::uint32_t i) {
@@ -45,6 +50,13 @@ public:
   }
 
   std::uint32_t size() const { return m_size; }
+
+  void clear() {
+    for (size_t i = 0; i < m_size; ++i) {
+      std::destroy_at(&m_values[i].value);
+    }
+    m_size = 0;
+  }
 
 private:
   std::uint32_t m_size;

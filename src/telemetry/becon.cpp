@@ -1,10 +1,10 @@
 #include "./becon.h"
-#include "canzero/telemetry/datagrams.h"
-#include "canzero/telemetry/server_info.hpp"
+#include "telemetry/datagrams.h"
+#include "telemetry/server_info.hpp"
 #include "firmware/telemetry/SocketAddr.hpp"
 #include "firmware/telemetry/UdpServer.hpp"
 
-namespace canzero::telemetry::becon {
+namespace telemetry::becon {
 
 using namespace telemetry_board;
 
@@ -17,6 +17,10 @@ void begin(ServerInfo *info) {
   udpServer.connect(UDP_BROADCAST_PORT);
   debugPrintf("Started UDP-Becon:\n");
   debugPrintf(" - port : %d\n", UDP_BROADCAST_PORT);
+}
+
+void end() {
+  udpServer.close();
 }
 
 void update() {

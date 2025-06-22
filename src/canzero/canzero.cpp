@@ -15,10 +15,16 @@ uint64_t min_u64(uint64_t v, uint64_t max) {
 uint64_t DMAMEM __oe_config_hash;
 date_time DMAMEM __oe_build_time;
 telemetry_state DMAMEM __oe_telemetry_state;
-uint32_t DMAMEM __oe_foo;
-uint32_t DMAMEM __oe_bar;
-uint32_t DMAMEM __oe_baz;
-uint32_t DMAMEM __oe_foobar;
+uint16_t DMAMEM __oe_dropped_tx_packets;
+uint16_t DMAMEM __oe_dropped_rx_packets;
+uint16_t DMAMEM __oe_dropped_tx_canframes;
+uint16_t DMAMEM __oe_dropped_rx_canframes;
+float DMAMEM __oe_telemetry_tx_memory_throughput;
+float DMAMEM __oe_telemetry_rx_memory_throughput;
+uint8_t DMAMEM __oe_active_connections;
+uint8_t DMAMEM __oe_accepts_new_connections;
+float DMAMEM __oe_loop_frequency;
+uint64_t DMAMEM __oe_test;
 static void canzero_serialize_canzero_message_get_resp(canzero_message_get_resp* msg, canzero_frame* frame) {
   volatile uint8_t* data = (volatile uint8_t*)frame->data;
   for(uint8_t i = 0; i < 8; ++i){
@@ -51,45 +57,63 @@ static void canzero_serialize_canzero_message_telemetry_board_stream_state(canze
   for(uint8_t i = 0; i < 8; ++i){
     data[i] = 0;
   }
-  frame->id = 0xD8;
-  frame->dlc = 1;
-  ((volatile uint32_t*)data)[0] = (uint8_t)(msg->m_telemetry_state & (0xFF >> (8 - 1)));
-}
-static void canzero_serialize_canzero_message_telemetry_board_stream_foo(canzero_message_telemetry_board_stream_foo* msg, canzero_frame* frame) {
-  volatile uint8_t* data = (volatile uint8_t*)frame->data;
-  for(uint8_t i = 0; i < 8; ++i){
-    data[i] = 0;
-  }
   frame->id = 0x98;
-  frame->dlc = 4;
-  ((volatile uint32_t*)data)[0] = msg->m_foo;
+  frame->dlc = 2;
+  ((volatile uint32_t*)data)[0] = (uint8_t)(msg->m_telemetry_state & (0xFF >> (8 - 2)));
+  ((volatile uint32_t*)data)[0] |= msg->m_active_connections << 2;
+  ((volatile uint32_t*)data)[0] |= (uint8_t)(msg->m_accepts_new_connections & (0xFF >> (8 - 1))) << 10;
 }
-static void canzero_serialize_canzero_message_telemetry_board_stream_bar(canzero_message_telemetry_board_stream_bar* msg, canzero_frame* frame) {
-  volatile uint8_t* data = (volatile uint8_t*)frame->data;
-  for(uint8_t i = 0; i < 8; ++i){
-    data[i] = 0;
-  }
-  frame->id = 0x58;
-  frame->dlc = 4;
-  ((volatile uint32_t*)data)[0] = msg->m_bar;
-}
-static void canzero_serialize_canzero_message_telemetry_board_stream_baz(canzero_message_telemetry_board_stream_baz* msg, canzero_frame* frame) {
-  volatile uint8_t* data = (volatile uint8_t*)frame->data;
-  for(uint8_t i = 0; i < 8; ++i){
-    data[i] = 0;
-  }
-  frame->id = 0x78;
-  frame->dlc = 4;
-  ((volatile uint32_t*)data)[0] = msg->m_baz;
-}
-static void canzero_serialize_canzero_message_telemetry_board_stream_foobar(canzero_message_telemetry_board_stream_foobar* msg, canzero_frame* frame) {
+static void canzero_serialize_canzero_message_telemetry_board_stream_telemetry_bandwidth(canzero_message_telemetry_board_stream_telemetry_bandwidth* msg, canzero_frame* frame) {
   volatile uint8_t* data = (volatile uint8_t*)frame->data;
   for(uint8_t i = 0; i < 8; ++i){
     data[i] = 0;
   }
   frame->id = 0xB8;
-  frame->dlc = 4;
-  ((volatile uint32_t*)data)[0] = msg->m_foobar;
+  frame->dlc = 8;
+  uint32_t telemetry_tx_memory_throughput_0 = ((msg->m_telemetry_tx_memory_throughput - 0) / 0.0000023283064370807974) + 0.5f;
+  if (telemetry_tx_memory_throughput_0 > 0xFFFFFFFF) {
+    telemetry_tx_memory_throughput_0 = 0xFFFFFFFF;
+  }
+  ((volatile uint32_t*)data)[0] = telemetry_tx_memory_throughput_0;
+  uint32_t telemetry_rx_memory_throughput_32 = ((msg->m_telemetry_rx_memory_throughput - 0) / 0.0000023283064370807974) + 0.5f;
+  if (telemetry_rx_memory_throughput_32 > 0xFFFFFFFF) {
+    telemetry_rx_memory_throughput_32 = 0xFFFFFFFF;
+  }
+  ((volatile uint32_t*)data)[1] = telemetry_rx_memory_throughput_32;
+}
+static void canzero_serialize_canzero_message_telemetry_board_stream_dropped_frames(canzero_message_telemetry_board_stream_dropped_frames* msg, canzero_frame* frame) {
+  volatile uint8_t* data = (volatile uint8_t*)frame->data;
+  for(uint8_t i = 0; i < 8; ++i){
+    data[i] = 0;
+  }
+  frame->id = 0x58;
+  frame->dlc = 8;
+  ((volatile uint32_t*)data)[0] = msg->m_dropped_tx_packets;
+  ((volatile uint32_t*)data)[0] |= msg->m_dropped_rx_packets << 16;
+  ((volatile uint32_t*)data)[1] = msg->m_dropped_tx_canframes;
+  ((volatile uint32_t*)data)[1] |= msg->m_dropped_rx_canframes << 16;
+}
+static void canzero_serialize_canzero_message_telemetry_board_stream_loop_frequency(canzero_message_telemetry_board_stream_loop_frequency* msg, canzero_frame* frame) {
+  volatile uint8_t* data = (volatile uint8_t*)frame->data;
+  for(uint8_t i = 0; i < 8; ++i){
+    data[i] = 0;
+  }
+  frame->id = 0x78;
+  frame->dlc = 2;
+  uint32_t loop_frequency_0 = ((msg->m_loop_frequency - 0) / 0.0015259021896696422) + 0.5f;
+  if (loop_frequency_0 > 0xFFFF) {
+    loop_frequency_0 = 0xFFFF;
+  }
+  ((volatile uint32_t*)data)[0] = loop_frequency_0;
+}
+static void canzero_serialize_canzero_message_telemetry_board_stream_test(canzero_message_telemetry_board_stream_test* msg, canzero_frame* frame) {
+  volatile uint8_t* data = (volatile uint8_t*)frame->data;
+  for(uint8_t i = 0; i < 8; ++i){
+    data[i] = 0;
+  }
+  frame->id = 0xD8;
+  frame->dlc = 8;
+  ((volatile uint64_t*)data)[0] = msg->m_test;
 }
 static void canzero_serialize_canzero_message_heartbeat_can0(canzero_message_heartbeat_can0* msg, canzero_frame* frame) {
   volatile uint8_t* data = (volatile uint8_t*)frame->data;
@@ -365,45 +389,45 @@ static void schedule_state_interval_job(){
   state_interval_job.job.stream_job.last_schedule = time;
   scheduler_schedule(&state_interval_job);
 }
-static job_t foo_interval_job;
-static const uint32_t foo_interval = 1;
-static void schedule_foo_interval_job(){
+static job_t telemetry_bandwidth_interval_job;
+static const uint32_t telemetry_bandwidth_interval = 100;
+static void schedule_telemetry_bandwidth_interval_job(){
   uint32_t time = canzero_get_time();
-  foo_interval_job.climax = time + foo_interval;
-  foo_interval_job.tag = STREAM_INTERVAL_JOB_TAG;
-  foo_interval_job.job.stream_job.stream_id = 1;
-  foo_interval_job.job.stream_job.last_schedule = time;
-  scheduler_schedule(&foo_interval_job);
+  telemetry_bandwidth_interval_job.climax = time + telemetry_bandwidth_interval;
+  telemetry_bandwidth_interval_job.tag = STREAM_INTERVAL_JOB_TAG;
+  telemetry_bandwidth_interval_job.job.stream_job.stream_id = 1;
+  telemetry_bandwidth_interval_job.job.stream_job.last_schedule = time;
+  scheduler_schedule(&telemetry_bandwidth_interval_job);
 }
-static job_t bar_interval_job;
-static const uint32_t bar_interval = 1;
-static void schedule_bar_interval_job(){
+static job_t dropped_frames_interval_job;
+static const uint32_t dropped_frames_interval = 100;
+static void schedule_dropped_frames_interval_job(){
   uint32_t time = canzero_get_time();
-  bar_interval_job.climax = time + bar_interval;
-  bar_interval_job.tag = STREAM_INTERVAL_JOB_TAG;
-  bar_interval_job.job.stream_job.stream_id = 2;
-  bar_interval_job.job.stream_job.last_schedule = time;
-  scheduler_schedule(&bar_interval_job);
+  dropped_frames_interval_job.climax = time + dropped_frames_interval;
+  dropped_frames_interval_job.tag = STREAM_INTERVAL_JOB_TAG;
+  dropped_frames_interval_job.job.stream_job.stream_id = 2;
+  dropped_frames_interval_job.job.stream_job.last_schedule = time;
+  scheduler_schedule(&dropped_frames_interval_job);
 }
-static job_t baz_interval_job;
-static const uint32_t baz_interval = 1;
-static void schedule_baz_interval_job(){
+static job_t loop_frequency_interval_job;
+static const uint32_t loop_frequency_interval = 100;
+static void schedule_loop_frequency_interval_job(){
   uint32_t time = canzero_get_time();
-  baz_interval_job.climax = time + baz_interval;
-  baz_interval_job.tag = STREAM_INTERVAL_JOB_TAG;
-  baz_interval_job.job.stream_job.stream_id = 3;
-  baz_interval_job.job.stream_job.last_schedule = time;
-  scheduler_schedule(&baz_interval_job);
+  loop_frequency_interval_job.climax = time + loop_frequency_interval;
+  loop_frequency_interval_job.tag = STREAM_INTERVAL_JOB_TAG;
+  loop_frequency_interval_job.job.stream_job.stream_id = 3;
+  loop_frequency_interval_job.job.stream_job.last_schedule = time;
+  scheduler_schedule(&loop_frequency_interval_job);
 }
-static job_t foobar_interval_job;
-static const uint32_t foobar_interval = 1;
-static void schedule_foobar_interval_job(){
+static job_t test_interval_job;
+static const uint32_t test_interval = 1;
+static void schedule_test_interval_job(){
   uint32_t time = canzero_get_time();
-  foobar_interval_job.climax = time + foobar_interval;
-  foobar_interval_job.tag = STREAM_INTERVAL_JOB_TAG;
-  foobar_interval_job.job.stream_job.stream_id = 4;
-  foobar_interval_job.job.stream_job.last_schedule = time;
-  scheduler_schedule(&foobar_interval_job);
+  test_interval_job.climax = time + test_interval;
+  test_interval_job.tag = STREAM_INTERVAL_JOB_TAG;
+  test_interval_job.job.stream_job.stream_id = 4;
+  test_interval_job.job.stream_job.last_schedule = time;
+  scheduler_schedule(&test_interval_job);
 }
 
 static void schedule_jobs(uint32_t time) {
@@ -419,45 +443,51 @@ static void schedule_jobs(uint32_t time) {
         switch (job->job.stream_job.stream_id) {
       case 0: {
         job->job.stream_job.last_schedule = time;
-        scheduler_reschedule(time + 1);
+        scheduler_reschedule(time + 500);
         canzero_exit_critical();
         canzero_message_telemetry_board_stream_state stream_message;
         stream_message.m_telemetry_state = __oe_telemetry_state;
+        stream_message.m_active_connections = __oe_active_connections;
+        stream_message.m_accepts_new_connections = __oe_accepts_new_connections;
         canzero_frame stream_frame;
         canzero_serialize_canzero_message_telemetry_board_stream_state(&stream_message, &stream_frame);
-        canzero_can1_send(&stream_frame);
+        canzero_can0_send(&stream_frame);
         break;
       }
       case 1: {
         job->job.stream_job.last_schedule = time;
-        scheduler_reschedule(time + 1);
+        scheduler_reschedule(time + 100);
         canzero_exit_critical();
-        canzero_message_telemetry_board_stream_foo stream_message;
-        stream_message.m_foo = __oe_foo;
+        canzero_message_telemetry_board_stream_telemetry_bandwidth stream_message;
+        stream_message.m_telemetry_tx_memory_throughput = __oe_telemetry_tx_memory_throughput;
+        stream_message.m_telemetry_rx_memory_throughput = __oe_telemetry_rx_memory_throughput;
         canzero_frame stream_frame;
-        canzero_serialize_canzero_message_telemetry_board_stream_foo(&stream_message, &stream_frame);
+        canzero_serialize_canzero_message_telemetry_board_stream_telemetry_bandwidth(&stream_message, &stream_frame);
         canzero_can1_send(&stream_frame);
         break;
       }
       case 2: {
         job->job.stream_job.last_schedule = time;
-        scheduler_reschedule(time + 1);
+        scheduler_reschedule(time + 1000);
         canzero_exit_critical();
-        canzero_message_telemetry_board_stream_bar stream_message;
-        stream_message.m_bar = __oe_bar;
+        canzero_message_telemetry_board_stream_dropped_frames stream_message;
+        stream_message.m_dropped_tx_packets = __oe_dropped_tx_packets;
+        stream_message.m_dropped_rx_packets = __oe_dropped_rx_packets;
+        stream_message.m_dropped_tx_canframes = __oe_dropped_tx_canframes;
+        stream_message.m_dropped_rx_canframes = __oe_dropped_rx_canframes;
         canzero_frame stream_frame;
-        canzero_serialize_canzero_message_telemetry_board_stream_bar(&stream_message, &stream_frame);
+        canzero_serialize_canzero_message_telemetry_board_stream_dropped_frames(&stream_message, &stream_frame);
         canzero_can1_send(&stream_frame);
         break;
       }
       case 3: {
         job->job.stream_job.last_schedule = time;
-        scheduler_reschedule(time + 1);
+        scheduler_reschedule(time + 100);
         canzero_exit_critical();
-        canzero_message_telemetry_board_stream_baz stream_message;
-        stream_message.m_baz = __oe_baz;
+        canzero_message_telemetry_board_stream_loop_frequency stream_message;
+        stream_message.m_loop_frequency = __oe_loop_frequency;
         canzero_frame stream_frame;
-        canzero_serialize_canzero_message_telemetry_board_stream_baz(&stream_message, &stream_frame);
+        canzero_serialize_canzero_message_telemetry_board_stream_loop_frequency(&stream_message, &stream_frame);
         canzero_can0_send(&stream_frame);
         break;
       }
@@ -465,10 +495,10 @@ static void schedule_jobs(uint32_t time) {
         job->job.stream_job.last_schedule = time;
         scheduler_reschedule(time + 1);
         canzero_exit_critical();
-        canzero_message_telemetry_board_stream_foobar stream_message;
-        stream_message.m_foobar = __oe_foobar;
+        canzero_message_telemetry_board_stream_test stream_message;
+        stream_message.m_test = __oe_test;
         canzero_frame stream_frame;
-        canzero_serialize_canzero_message_telemetry_board_stream_foobar(&stream_message, &stream_frame);
+        canzero_serialize_canzero_message_telemetry_board_stream_test(&stream_message, &stream_frame);
         canzero_can0_send(&stream_frame);
         break;
       }
@@ -549,7 +579,7 @@ static void schedule_jobs(uint32_t time) {
         canzero_exit_critical();
         canzero_frame fragmentation_frame;
         canzero_serialize_canzero_message_get_resp(&fragmentation_response, &fragmentation_frame);
-        canzero_can0_send(&fragmentation_frame);
+        canzero_can1_send(&fragmentation_frame);
         break;
       }
       default: {
@@ -566,6 +596,7 @@ static uint32_t scheduler_next_job_timeout() {
 
 static uint32_t DMAMEM __oe_config_hash_rx_fragmentation_buffer[2];
 static uint32_t DMAMEM __oe_build_time_rx_fragmentation_buffer[2];
+static uint32_t DMAMEM __oe_test_rx_fragmentation_buffer[2];
 static PROGMEM void canzero_handle_get_req(canzero_frame* frame) {
   canzero_message_get_req msg;
   canzero_deserialize_canzero_message_get_req(frame, &msg);
@@ -603,38 +634,86 @@ static PROGMEM void canzero_handle_get_req(canzero_frame* frame) {
     break;
   }
   case 2: {
-    resp.m_data |= ((uint32_t)(((uint8_t)__oe_telemetry_state) & (0xFF >> (8 - 1)))) << 0;
+    resp.m_data |= ((uint32_t)(((uint8_t)__oe_telemetry_state) & (0xFF >> (8 - 2)))) << 0;
     resp.m_header.m_sof = 1;
     resp.m_header.m_eof = 1;
     resp.m_header.m_toggle = 0;
     break;
   }
   case 3: {
-    resp.m_data |= (__oe_foo & (0xFFFFFFFF >> (32 - 32))) << 0;
+    resp.m_data |= ((uint32_t)(__oe_dropped_tx_packets & (0xFFFF >> (16 - 16)))) << 0;
     resp.m_header.m_sof = 1;
     resp.m_header.m_eof = 1;
     resp.m_header.m_toggle = 0;
     break;
   }
   case 4: {
-    resp.m_data |= (__oe_bar & (0xFFFFFFFF >> (32 - 32))) << 0;
+    resp.m_data |= ((uint32_t)(__oe_dropped_rx_packets & (0xFFFF >> (16 - 16)))) << 0;
     resp.m_header.m_sof = 1;
     resp.m_header.m_eof = 1;
     resp.m_header.m_toggle = 0;
     break;
   }
   case 5: {
-    resp.m_data |= (__oe_baz & (0xFFFFFFFF >> (32 - 32))) << 0;
+    resp.m_data |= ((uint32_t)(__oe_dropped_tx_canframes & (0xFFFF >> (16 - 16)))) << 0;
     resp.m_header.m_sof = 1;
     resp.m_header.m_eof = 1;
     resp.m_header.m_toggle = 0;
     break;
   }
   case 6: {
-    resp.m_data |= (__oe_foobar & (0xFFFFFFFF >> (32 - 32))) << 0;
+    resp.m_data |= ((uint32_t)(__oe_dropped_rx_canframes & (0xFFFF >> (16 - 16)))) << 0;
     resp.m_header.m_sof = 1;
     resp.m_header.m_eof = 1;
     resp.m_header.m_toggle = 0;
+    break;
+  }
+  case 7: {
+    resp.m_data |= min_u32((__oe_telemetry_tx_memory_throughput - (0)) / 0.0000023283064370807974, 0xFFFFFFFF) << 0;
+    resp.m_header.m_sof = 1;
+    resp.m_header.m_eof = 1;
+    resp.m_header.m_toggle = 0;
+    break;
+  }
+  case 8: {
+    resp.m_data |= min_u32((__oe_telemetry_rx_memory_throughput - (0)) / 0.0000023283064370807974, 0xFFFFFFFF) << 0;
+    resp.m_header.m_sof = 1;
+    resp.m_header.m_eof = 1;
+    resp.m_header.m_toggle = 0;
+    break;
+  }
+  case 9: {
+    resp.m_data |= ((uint32_t)(__oe_active_connections & (0xFF >> (8 - 8)))) << 0;
+    resp.m_header.m_sof = 1;
+    resp.m_header.m_eof = 1;
+    resp.m_header.m_toggle = 0;
+    break;
+  }
+  case 10: {
+    resp.m_data |= ((uint32_t)(__oe_accepts_new_connections & (0xFF >> (8 - 1)))) << 0;
+    resp.m_header.m_sof = 1;
+    resp.m_header.m_eof = 1;
+    resp.m_header.m_toggle = 0;
+    break;
+  }
+  case 11: {
+    resp.m_data |= min_u32((__oe_loop_frequency - (0)) / 0.0015259021896696422, 0xFFFF) << 0;
+    resp.m_header.m_sof = 1;
+    resp.m_header.m_eof = 1;
+    resp.m_header.m_toggle = 0;
+    break;
+  }
+  case 12: {
+    {
+      uint64_t masked = (__oe_test & (0xFFFFFFFFFFFFFFFF >> (64 - 64)));
+      __oe_test_rx_fragmentation_buffer[0] = ((uint32_t*)&masked)[0];
+      __oe_test_rx_fragmentation_buffer[1] = ((uint32_t*)&masked)[1];
+    }
+    resp.m_data = __oe_test_rx_fragmentation_buffer[0];
+    resp.m_header.m_sof = 1;
+    resp.m_header.m_eof = 0;
+    resp.m_header.m_toggle = 0;
+    schedule_get_resp_fragmentation_job(__oe_test_rx_fragmentation_buffer, 2, 12, msg.m_header.m_client_id);
     break;
   }
   }
@@ -643,12 +722,14 @@ static PROGMEM void canzero_handle_get_req(canzero_frame* frame) {
   resp.m_header.m_server_id = msg.m_header.m_server_id;
   canzero_frame resp_frame;
   canzero_serialize_canzero_message_get_resp(&resp, &resp_frame);
-  canzero_can0_send(&resp_frame);
+  canzero_can1_send(&resp_frame);
 }
 static uint32_t DMAMEM config_hash_tmp_tx_fragmentation_buffer[2];
 static uint32_t DMAMEM config_hash_tmp_tx_fragmentation_offset = 0;
 static uint32_t DMAMEM build_time_tmp_tx_fragmentation_buffer[2];
 static uint32_t DMAMEM build_time_tmp_tx_fragmentation_offset = 0;
+static uint32_t DMAMEM test_tmp_tx_fragmentation_buffer[2];
+static uint32_t DMAMEM test_tmp_tx_fragmentation_offset = 0;
 static PROGMEM void canzero_handle_set_req(canzero_frame* frame) {
   canzero_message_set_req msg;
   canzero_deserialize_canzero_message_set_req(frame, &msg);
@@ -709,7 +790,7 @@ static PROGMEM void canzero_handle_set_req(canzero_frame* frame) {
       return;
     }
     telemetry_state telemetry_state_tmp;
-    telemetry_state_tmp = ((telemetry_state)((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 1))));
+    telemetry_state_tmp = ((telemetry_state)((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 2))));
     canzero_set_telemetry_state(telemetry_state_tmp);
     break;
   }
@@ -717,36 +798,102 @@ static PROGMEM void canzero_handle_set_req(canzero_frame* frame) {
     if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
       return;
     }
-    uint32_t foo_tmp;
-    foo_tmp = ((uint32_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 32)))));
-    canzero_set_foo(foo_tmp);
+    uint16_t dropped_tx_packets_tmp;
+    dropped_tx_packets_tmp = ((uint16_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 16)))));
+    canzero_set_dropped_tx_packets(dropped_tx_packets_tmp);
     break;
   }
   case 4 : {
     if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
       return;
     }
-    uint32_t bar_tmp;
-    bar_tmp = ((uint32_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 32)))));
-    canzero_set_bar(bar_tmp);
+    uint16_t dropped_rx_packets_tmp;
+    dropped_rx_packets_tmp = ((uint16_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 16)))));
+    canzero_set_dropped_rx_packets(dropped_rx_packets_tmp);
     break;
   }
   case 5 : {
     if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
       return;
     }
-    uint32_t baz_tmp;
-    baz_tmp = ((uint32_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 32)))));
-    canzero_set_baz(baz_tmp);
+    uint16_t dropped_tx_canframes_tmp;
+    dropped_tx_canframes_tmp = ((uint16_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 16)))));
+    canzero_set_dropped_tx_canframes(dropped_tx_canframes_tmp);
     break;
   }
   case 6 : {
     if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
       return;
     }
-    uint32_t foobar_tmp;
-    foobar_tmp = ((uint32_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 32)))));
-    canzero_set_foobar(foobar_tmp);
+    uint16_t dropped_rx_canframes_tmp;
+    dropped_rx_canframes_tmp = ((uint16_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 16)))));
+    canzero_set_dropped_rx_canframes(dropped_rx_canframes_tmp);
+    break;
+  }
+  case 7 : {
+    if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
+      return;
+    }
+    float telemetry_tx_memory_throughput_tmp;
+    telemetry_tx_memory_throughput_tmp = (float)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 32))) * 0.0000023283064370807974 + 0);
+    canzero_set_telemetry_tx_memory_throughput(telemetry_tx_memory_throughput_tmp);
+    break;
+  }
+  case 8 : {
+    if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
+      return;
+    }
+    float telemetry_rx_memory_throughput_tmp;
+    telemetry_rx_memory_throughput_tmp = (float)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 32))) * 0.0000023283064370807974 + 0);
+    canzero_set_telemetry_rx_memory_throughput(telemetry_rx_memory_throughput_tmp);
+    break;
+  }
+  case 9 : {
+    if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
+      return;
+    }
+    uint8_t active_connections_tmp;
+    active_connections_tmp = ((uint8_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 8)))));
+    canzero_set_active_connections(active_connections_tmp);
+    break;
+  }
+  case 10 : {
+    if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
+      return;
+    }
+    uint8_t accepts_new_connections_tmp;
+    accepts_new_connections_tmp = ((uint8_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 1)))));
+    canzero_set_accepts_new_connections(accepts_new_connections_tmp);
+    break;
+  }
+  case 11 : {
+    if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
+      return;
+    }
+    float loop_frequency_tmp;
+    loop_frequency_tmp = (float)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 16))) * 0.0015259021896696422 + 0);
+    canzero_set_loop_frequency(loop_frequency_tmp);
+    break;
+  }
+  case 12 : {
+    if (msg.m_header.m_sof == 1) {
+      if (msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 0) {
+        return; //TODO proper error response frame!
+      }
+      test_tmp_tx_fragmentation_offset = 0;
+    }else {
+      test_tmp_tx_fragmentation_offset += 1;
+      if (test_tmp_tx_fragmentation_offset >= 2) {
+        return;
+      }
+    }
+    test_tmp_tx_fragmentation_buffer[test_tmp_tx_fragmentation_offset] = msg.m_data;
+    if (msg.m_header.m_eof == 0) {
+      return;
+    }
+    uint64_t test_tmp;
+    test_tmp = (uint64_t)test_tmp_tx_fragmentation_buffer[0] | (((uint64_t)(test_tmp_tx_fragmentation_buffer[1] & (0xFFFFFFFF >> (32 - 32)))) << 32);
+    canzero_set_test(test_tmp);
     break;
   }
   default:
@@ -758,7 +905,7 @@ static PROGMEM void canzero_handle_set_req(canzero_frame* frame) {
   resp.m_header.m_erno = set_resp_erno_Success;
   canzero_frame resp_frame;
   canzero_serialize_canzero_message_set_resp(&resp, &resp_frame);
-  canzero_can1_send(&resp_frame);
+  canzero_can0_send(&resp_frame);
 
 }
  void canzero_handle_heartbeat_can0(canzero_frame* frame) {
@@ -827,8 +974,8 @@ void canzero_can0_poll() {
   canzero_frame frame;
   while (canzero_can0_recv(&frame)) {
     switch (frame.id) {
-      case 0x1BE:
-        canzero_handle_get_req(&frame);
+      case 0x1DE:
+        canzero_handle_set_req(&frame);
         break;
       case 0x1F4:
         canzero_handle_heartbeat_can0(&frame);
@@ -840,8 +987,8 @@ void canzero_can1_poll() {
   canzero_frame frame;
   while (canzero_can1_recv(&frame)) {
     switch (frame.id) {
-      case 0x1DE:
-        canzero_handle_set_req(&frame);
+      case 0x1BE:
+        canzero_handle_get_req(&frame);
         break;
       case 0x1F3:
         canzero_handle_heartbeat_can1(&frame);
@@ -904,7 +1051,7 @@ uint32_t canzero_update_continue(uint32_t time){
 #define BUILD_MIN   ((BUILD_TIME_IS_BAD) ? 99 :  COMPUTE_BUILD_MIN)
 #define BUILD_SEC   ((BUILD_TIME_IS_BAD) ? 99 :  COMPUTE_BUILD_SEC)
 void canzero_init() {
-  __oe_config_hash = 15019298173904265123ull;
+  __oe_config_hash = 5991672245671505790ull;
   __oe_build_time = {
     .m_year = BUILD_YEAR,
     .m_month = BUILD_MONTH,
@@ -921,14 +1068,85 @@ void canzero_init() {
   schedule_heartbeat_job();
   schedule_heartbeat_wdg_job();
   schedule_state_interval_job();
-  schedule_foo_interval_job();
-  schedule_bar_interval_job();
-  schedule_baz_interval_job();
-  schedule_foobar_interval_job();
+  schedule_telemetry_bandwidth_interval_job();
+  schedule_dropped_frames_interval_job();
+  schedule_loop_frequency_interval_job();
+  schedule_test_interval_job();
 
+}
+void canzero_set_telemetry_state(telemetry_state value) {
+  extern telemetry_state __oe_telemetry_state;
+  if (__oe_telemetry_state != value) {
+    __oe_telemetry_state = value;
+    if (state_interval_job.climax > state_interval_job.job.stream_job.last_schedule + 1) {
+      state_interval_job.climax = state_interval_job.job.stream_job.last_schedule + 1;
+      scheduler_promote_job(&state_interval_job);
+    }
+  }
+}
+void canzero_set_dropped_tx_packets(uint16_t value) {
+  extern uint16_t __oe_dropped_tx_packets;
+  if (__oe_dropped_tx_packets != value) {
+    __oe_dropped_tx_packets = value;
+    if (dropped_frames_interval_job.climax > dropped_frames_interval_job.job.stream_job.last_schedule + 100) {
+      dropped_frames_interval_job.climax = dropped_frames_interval_job.job.stream_job.last_schedule + 100;
+      scheduler_promote_job(&dropped_frames_interval_job);
+    }
+  }
+}
+void canzero_set_dropped_rx_packets(uint16_t value) {
+  extern uint16_t __oe_dropped_rx_packets;
+  if (__oe_dropped_rx_packets != value) {
+    __oe_dropped_rx_packets = value;
+    if (dropped_frames_interval_job.climax > dropped_frames_interval_job.job.stream_job.last_schedule + 100) {
+      dropped_frames_interval_job.climax = dropped_frames_interval_job.job.stream_job.last_schedule + 100;
+      scheduler_promote_job(&dropped_frames_interval_job);
+    }
+  }
+}
+void canzero_set_dropped_tx_canframes(uint16_t value) {
+  extern uint16_t __oe_dropped_tx_canframes;
+  if (__oe_dropped_tx_canframes != value) {
+    __oe_dropped_tx_canframes = value;
+    if (dropped_frames_interval_job.climax > dropped_frames_interval_job.job.stream_job.last_schedule + 100) {
+      dropped_frames_interval_job.climax = dropped_frames_interval_job.job.stream_job.last_schedule + 100;
+      scheduler_promote_job(&dropped_frames_interval_job);
+    }
+  }
+}
+void canzero_set_dropped_rx_canframes(uint16_t value) {
+  extern uint16_t __oe_dropped_rx_canframes;
+  if (__oe_dropped_rx_canframes != value) {
+    __oe_dropped_rx_canframes = value;
+    if (dropped_frames_interval_job.climax > dropped_frames_interval_job.job.stream_job.last_schedule + 100) {
+      dropped_frames_interval_job.climax = dropped_frames_interval_job.job.stream_job.last_schedule + 100;
+      scheduler_promote_job(&dropped_frames_interval_job);
+    }
+  }
+}
+void canzero_set_active_connections(uint8_t value) {
+  extern uint8_t __oe_active_connections;
+  if (__oe_active_connections != value) {
+    __oe_active_connections = value;
+    if (state_interval_job.climax > state_interval_job.job.stream_job.last_schedule + 1) {
+      state_interval_job.climax = state_interval_job.job.stream_job.last_schedule + 1;
+      scheduler_promote_job(&state_interval_job);
+    }
+  }
+}
+void canzero_set_accepts_new_connections(uint8_t value) {
+  extern uint8_t __oe_accepts_new_connections;
+  if (__oe_accepts_new_connections != value) {
+    __oe_accepts_new_connections = value;
+    if (state_interval_job.climax > state_interval_job.job.stream_job.last_schedule + 1) {
+      state_interval_job.climax = state_interval_job.job.stream_job.last_schedule + 1;
+      scheduler_promote_job(&state_interval_job);
+    }
+  }
 }
 static uint32_t DMAMEM __oe_config_hash_send_fragmentation_buffer[2];
 static uint32_t DMAMEM __oe_build_time_send_fragmentation_buffer[2];
+static uint32_t DMAMEM __oe_test_send_fragmentation_buffer[2];
 void canzero_send_config_hash() {
   canzero_message_get_resp msg;
   {
@@ -945,7 +1163,7 @@ void canzero_send_config_hash() {
   msg.m_header.m_server_id = node_id_telemetry_board;
   canzero_frame sender_frame;
   canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
-  canzero_can0_send(&sender_frame);
+  canzero_can1_send(&sender_frame);
   schedule_get_resp_fragmentation_job(__oe_config_hash_send_fragmentation_buffer, 2, 0, 255);
 
 }
@@ -967,13 +1185,13 @@ void canzero_send_build_time() {
   msg.m_header.m_server_id = node_id_telemetry_board;
   canzero_frame sender_frame;
   canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
-  canzero_can0_send(&sender_frame);
+  canzero_can1_send(&sender_frame);
   schedule_get_resp_fragmentation_job(__oe_build_time_send_fragmentation_buffer, 2, 1, 255);
 
 }
 void canzero_send_telemetry_state() {
   canzero_message_get_resp msg;
-  msg.m_data |= ((uint32_t)(((uint8_t)__oe_telemetry_state) & (0xFF >> (8 - 1)))) << 0;
+  msg.m_data |= ((uint32_t)(((uint8_t)__oe_telemetry_state) & (0xFF >> (8 - 2)))) << 0;
   msg.m_header.m_eof = 1;
   msg.m_header.m_sof = 1;
   msg.m_header.m_toggle = 0;
@@ -982,11 +1200,11 @@ void canzero_send_telemetry_state() {
   msg.m_header.m_server_id = node_id_telemetry_board;
   canzero_frame sender_frame;
   canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
-  canzero_can0_send(&sender_frame);
+  canzero_can1_send(&sender_frame);
 }
-void canzero_send_foo() {
+void canzero_send_dropped_tx_packets() {
   canzero_message_get_resp msg;
-  msg.m_data |= (__oe_foo & (0xFFFFFFFF >> (32 - 32))) << 0;
+  msg.m_data |= ((uint32_t)(__oe_dropped_tx_packets & (0xFFFF >> (16 - 16)))) << 0;
   msg.m_header.m_eof = 1;
   msg.m_header.m_sof = 1;
   msg.m_header.m_toggle = 0;
@@ -995,11 +1213,11 @@ void canzero_send_foo() {
   msg.m_header.m_server_id = node_id_telemetry_board;
   canzero_frame sender_frame;
   canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
-  canzero_can0_send(&sender_frame);
+  canzero_can1_send(&sender_frame);
 }
-void canzero_send_bar() {
+void canzero_send_dropped_rx_packets() {
   canzero_message_get_resp msg;
-  msg.m_data |= (__oe_bar & (0xFFFFFFFF >> (32 - 32))) << 0;
+  msg.m_data |= ((uint32_t)(__oe_dropped_rx_packets & (0xFFFF >> (16 - 16)))) << 0;
   msg.m_header.m_eof = 1;
   msg.m_header.m_sof = 1;
   msg.m_header.m_toggle = 0;
@@ -1008,11 +1226,11 @@ void canzero_send_bar() {
   msg.m_header.m_server_id = node_id_telemetry_board;
   canzero_frame sender_frame;
   canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
-  canzero_can0_send(&sender_frame);
+  canzero_can1_send(&sender_frame);
 }
-void canzero_send_baz() {
+void canzero_send_dropped_tx_canframes() {
   canzero_message_get_resp msg;
-  msg.m_data |= (__oe_baz & (0xFFFFFFFF >> (32 - 32))) << 0;
+  msg.m_data |= ((uint32_t)(__oe_dropped_tx_canframes & (0xFFFF >> (16 - 16)))) << 0;
   msg.m_header.m_eof = 1;
   msg.m_header.m_sof = 1;
   msg.m_header.m_toggle = 0;
@@ -1021,11 +1239,11 @@ void canzero_send_baz() {
   msg.m_header.m_server_id = node_id_telemetry_board;
   canzero_frame sender_frame;
   canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
-  canzero_can0_send(&sender_frame);
+  canzero_can1_send(&sender_frame);
 }
-void canzero_send_foobar() {
+void canzero_send_dropped_rx_canframes() {
   canzero_message_get_resp msg;
-  msg.m_data |= (__oe_foobar & (0xFFFFFFFF >> (32 - 32))) << 0;
+  msg.m_data |= ((uint32_t)(__oe_dropped_rx_canframes & (0xFFFF >> (16 - 16)))) << 0;
   msg.m_header.m_eof = 1;
   msg.m_header.m_sof = 1;
   msg.m_header.m_toggle = 0;
@@ -1034,5 +1252,90 @@ void canzero_send_foobar() {
   msg.m_header.m_server_id = node_id_telemetry_board;
   canzero_frame sender_frame;
   canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
-  canzero_can0_send(&sender_frame);
+  canzero_can1_send(&sender_frame);
+}
+void canzero_send_telemetry_tx_memory_throughput() {
+  canzero_message_get_resp msg;
+  msg.m_data |= min_u32((__oe_telemetry_tx_memory_throughput - (0)) / 0.0000023283064370807974, 0xFFFFFFFF) << 0;
+  msg.m_header.m_eof = 1;
+  msg.m_header.m_sof = 1;
+  msg.m_header.m_toggle = 0;
+  msg.m_header.m_od_index = 7;
+  msg.m_header.m_client_id = 255;
+  msg.m_header.m_server_id = node_id_telemetry_board;
+  canzero_frame sender_frame;
+  canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
+  canzero_can1_send(&sender_frame);
+}
+void canzero_send_telemetry_rx_memory_throughput() {
+  canzero_message_get_resp msg;
+  msg.m_data |= min_u32((__oe_telemetry_rx_memory_throughput - (0)) / 0.0000023283064370807974, 0xFFFFFFFF) << 0;
+  msg.m_header.m_eof = 1;
+  msg.m_header.m_sof = 1;
+  msg.m_header.m_toggle = 0;
+  msg.m_header.m_od_index = 8;
+  msg.m_header.m_client_id = 255;
+  msg.m_header.m_server_id = node_id_telemetry_board;
+  canzero_frame sender_frame;
+  canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
+  canzero_can1_send(&sender_frame);
+}
+void canzero_send_active_connections() {
+  canzero_message_get_resp msg;
+  msg.m_data |= ((uint32_t)(__oe_active_connections & (0xFF >> (8 - 8)))) << 0;
+  msg.m_header.m_eof = 1;
+  msg.m_header.m_sof = 1;
+  msg.m_header.m_toggle = 0;
+  msg.m_header.m_od_index = 9;
+  msg.m_header.m_client_id = 255;
+  msg.m_header.m_server_id = node_id_telemetry_board;
+  canzero_frame sender_frame;
+  canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
+  canzero_can1_send(&sender_frame);
+}
+void canzero_send_accepts_new_connections() {
+  canzero_message_get_resp msg;
+  msg.m_data |= ((uint32_t)(__oe_accepts_new_connections & (0xFF >> (8 - 1)))) << 0;
+  msg.m_header.m_eof = 1;
+  msg.m_header.m_sof = 1;
+  msg.m_header.m_toggle = 0;
+  msg.m_header.m_od_index = 10;
+  msg.m_header.m_client_id = 255;
+  msg.m_header.m_server_id = node_id_telemetry_board;
+  canzero_frame sender_frame;
+  canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
+  canzero_can1_send(&sender_frame);
+}
+void canzero_send_loop_frequency() {
+  canzero_message_get_resp msg;
+  msg.m_data |= min_u32((__oe_loop_frequency - (0)) / 0.0015259021896696422, 0xFFFF) << 0;
+  msg.m_header.m_eof = 1;
+  msg.m_header.m_sof = 1;
+  msg.m_header.m_toggle = 0;
+  msg.m_header.m_od_index = 11;
+  msg.m_header.m_client_id = 255;
+  msg.m_header.m_server_id = node_id_telemetry_board;
+  canzero_frame sender_frame;
+  canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
+  canzero_can1_send(&sender_frame);
+}
+void canzero_send_test() {
+  canzero_message_get_resp msg;
+  {
+    uint64_t masked = (__oe_test & (0xFFFFFFFFFFFFFFFF >> (64 - 64)));
+    __oe_test_send_fragmentation_buffer[0] = ((uint32_t*)&masked)[0];
+    __oe_test_send_fragmentation_buffer[1] = ((uint32_t*)&masked)[1];
+  }
+  msg.m_data = __oe_test_send_fragmentation_buffer[0];
+  msg.m_header.m_eof = 0;
+  msg.m_header.m_sof = 1;
+  msg.m_header.m_toggle = 0;
+  msg.m_header.m_od_index = 12;
+  msg.m_header.m_client_id = 255;
+  msg.m_header.m_server_id = node_id_telemetry_board;
+  canzero_frame sender_frame;
+  canzero_serialize_canzero_message_get_resp(&msg, &sender_frame);
+  canzero_can1_send(&sender_frame);
+  schedule_get_resp_fragmentation_job(__oe_test_send_fragmentation_buffer, 2, 12, 255);
+
 }

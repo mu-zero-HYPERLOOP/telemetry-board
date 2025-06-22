@@ -1,15 +1,15 @@
 #pragma once
 
 #include "canzero/canzero.h"
-#include "canzero/telemetry/ip_host.h"
-#include "canzero/telemetry/packets.h"
+#include "telemetry/ip_host.h"
+#include "telemetry/packets.h"
 #include "firmware/telemetry/SocketAddr.hpp"
 #include "firmware/telemetry/TcpServer.hpp"
 #include "util/cyclic_buffer.h"
 #include "util/interval.h"
 #include <utility>
 
-namespace canzero::telemetry {
+namespace telemetry {
 
 enum class ConnectionState {
   Closed,
@@ -52,7 +52,12 @@ public:
     m_optionResponse = o.m_optionResponse;
     return *this;
   }
-  ~Connection() {}
+  ~Connection() {
+    close();
+    if (m_uniqueId.has_value()) {
+      m_idHost->free_id(m_uniqueId.value());
+    }
+  }
 
   bool recv(Packet *packet);
 
@@ -79,6 +84,8 @@ private:
 
   static constexpr std::size_t TX_QUEUE_SIZE = 128;
   CyclicBuffer<Packet, TX_QUEUE_SIZE> m_txQueue;
+
+  std::optional<uint8_t> m_uniqueId;
 
   Interval m_keepAliveInterval{250_ms};
 };

@@ -1,10 +1,10 @@
 #include "./connection.h"
-#include "canzero/telemetry/packets.h"
+#include "telemetry/packets.h"
 #include "firmware/telemetry/TcpServer.hpp"
 #include "print.h"
 #include "util/timing.h"
 
-namespace canzero::telemetry {
+namespace telemetry {
 
 bool Connection::recv(Packet *packet) {
   auto opt = m_rxQueue.dequeue();
@@ -117,6 +117,7 @@ void Connection::update() {
               std::optional<uint8_t> nodeIdreq = m_idHost->alloc_id();
               if (nodeIdreq.has_value()) {
                 nodeId = nodeIdreq.value();
+                m_uniqueId = nodeId;
               } else {
                 ok = false;
               }

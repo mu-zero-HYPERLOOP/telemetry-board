@@ -1,12 +1,12 @@
 #pragma once
 
-#include "canzero/telemetry/server_info.hpp"
+#include "telemetry/server_info.hpp"
 #include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <string_view>
 
-namespace canzero::telemetry {
+namespace telemetry {
 
 enum class DatagramTag : std::uint8_t {
   Hello = 0x0,

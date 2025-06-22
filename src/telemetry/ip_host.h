@@ -1,13 +1,14 @@
 #pragma once
 
 #include "canzero/canzero.h"
-#include "canzero/telemetry/server_config.h"
+#include "telemetry/server_config.h"
 #include <array>
 #include <cassert>
 #include <cstddef>
 #include <limits>
 #include <optional>
-namespace canzero::telemetry::server {
+
+namespace telemetry::server {
 
 class ConnectionIdHost {
   static constexpr uint8_t StaticNodeIdCount =
@@ -17,12 +18,7 @@ class ConnectionIdHost {
                 std::numeric_limits<uint8_t>::max());
 
 public:
-  ConnectionIdHost() {
-    for (uint8_t i = 0; i < MAX_DYNAMIC_IDS; ++i) {
-      freeIds[i] = i + StaticNodeIdCount;
-    }
-    freeIdsCount = MAX_DYNAMIC_IDS;
-  }
+  ConnectionIdHost() { reset(); }
   ConnectionIdHost(const ConnectionIdHost &) = delete;
   ConnectionIdHost &operator=(const ConnectionIdHost &) = delete;
   ConnectionIdHost(ConnectionIdHost &) = delete;
@@ -42,9 +38,16 @@ public:
     freeIds[freeIdsCount++] = id;
   }
 
+  void reset() {
+    for (uint8_t i = 0; i < MAX_DYNAMIC_IDS; ++i) {
+      freeIds[i] = i + StaticNodeIdCount;
+    }
+    freeIdsCount = MAX_DYNAMIC_IDS;
+  }
+
 private:
   std::array<uint8_t, MAX_DYNAMIC_IDS> freeIds;
   std::size_t freeIdsCount;
 };
 
-} // namespace canzero::telemetry::server
+} // namespace telemetry::server

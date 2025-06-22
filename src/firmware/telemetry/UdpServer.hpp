@@ -15,6 +15,9 @@ class UdpServer {
 
     bool recv(void* data, std::size_t size, SocketAddr* addr);
 
+
+    void close();
+
   
   private:
     // TODO keep local receive buffer

@@ -35,7 +35,7 @@ template <typename T, std::size_t SIZE> struct CyclicBuffer {
     if (r == w) {
       return std::nullopt;
     }
-    T ret = m_buffer[r++];
+    T ret = std::move(m_buffer[r++]);
     if (r == SIZE) {
       r = 0U;
     }
@@ -54,6 +54,8 @@ template <typename T, std::size_t SIZE> struct CyclicBuffer {
   }
 
   void clear() {
+    std::optional<T> v;
+    while ((v = dequeue()).has_value()) { }
     m_read = 0;
     m_write = 0;
   }
