@@ -6,18 +6,17 @@
 typedef enum {
   node_id_gamepad = 0,
   node_id_telemetry_board = 1,
-  node_id_mother_board = 2,
-  node_id_motor_driver = 3,
+  node_id_motor_driver = 2,
+  node_id_input_board = 3,
   node_id_guidance_board_front = 4,
   node_id_guidance_board_back = 5,
   node_id_levitation_board1 = 6,
   node_id_levitation_board2 = 7,
   node_id_levitation_board3 = 8,
-  node_id_input_board = 9,
-  node_id_power_board12 = 10,
-  node_id_power_board24 = 11,
-  node_id_led_board = 12,
-  node_id_count = 13,
+  node_id_power_board12 = 9,
+  node_id_power_board24 = 10,
+  node_id_led_board = 11,
+  node_id_count = 12,
 } node_id;
 typedef struct {
   uint16_t m_od_index;
@@ -144,58 +143,58 @@ typedef struct {
   get_resp_header m_header;
   uint32_t m_data;
 } canzero_message_get_resp;
-static const uint32_t canzero_message_get_resp_id = 0x1BD;
+static const uint32_t canzero_message_get_resp_id = 0x13D;
 typedef struct {
   set_resp_header m_header;
 } canzero_message_set_resp;
-static const uint32_t canzero_message_set_resp_id = 0x1DD;
+static const uint32_t canzero_message_set_resp_id = 0x15D;
 typedef struct {
   telemetry_state m_telemetry_state;
   uint8_t m_active_connections;
   uint8_t m_accepts_new_connections;
 } canzero_message_telemetry_board_stream_state;
-static const uint32_t canzero_message_telemetry_board_stream_state_id = 0x98;
+static const uint32_t canzero_message_telemetry_board_stream_state_id = 0xB4;
 typedef struct {
   float m_telemetry_tx_memory_throughput;
   float m_telemetry_rx_memory_throughput;
 } canzero_message_telemetry_board_stream_telemetry_bandwidth;
-static const uint32_t canzero_message_telemetry_board_stream_telemetry_bandwidth_id = 0xB8;
+static const uint32_t canzero_message_telemetry_board_stream_telemetry_bandwidth_id = 0xD4;
 typedef struct {
   uint16_t m_dropped_tx_packets;
   uint16_t m_dropped_rx_packets;
   uint16_t m_dropped_tx_canframes;
   uint16_t m_dropped_rx_canframes;
 } canzero_message_telemetry_board_stream_dropped_frames;
-static const uint32_t canzero_message_telemetry_board_stream_dropped_frames_id = 0x58;
+static const uint32_t canzero_message_telemetry_board_stream_dropped_frames_id = 0x74;
 typedef struct {
   float m_loop_frequency;
 } canzero_message_telemetry_board_stream_loop_frequency;
-static const uint32_t canzero_message_telemetry_board_stream_loop_frequency_id = 0x78;
+static const uint32_t canzero_message_telemetry_board_stream_loop_frequency_id = 0x94;
 typedef struct {
   uint64_t m_test;
 } canzero_message_telemetry_board_stream_test;
-static const uint32_t canzero_message_telemetry_board_stream_test_id = 0xD8;
+static const uint32_t canzero_message_telemetry_board_stream_test_id = 0xF4;
 typedef struct {
   uint8_t m_node_id;
   uint8_t m_unregister;
   uint8_t m_ticks_next;
 } canzero_message_heartbeat_can0;
-static const uint32_t canzero_message_heartbeat_can0_id = 0x1F4;
+static const uint32_t canzero_message_heartbeat_can0_id = 0x16F;
 typedef struct {
   uint8_t m_node_id;
   uint8_t m_unregister;
   uint8_t m_ticks_next;
 } canzero_message_heartbeat_can1;
-static const uint32_t canzero_message_heartbeat_can1_id = 0x1F3;
+static const uint32_t canzero_message_heartbeat_can1_id = 0x16E;
 typedef struct {
   get_req_header m_header;
 } canzero_message_get_req;
-static const uint32_t canzero_message_get_req_id = 0x1BE;
+static const uint32_t canzero_message_get_req_id = 0x13E;
 typedef struct {
   set_req_header m_header;
   uint32_t m_data;
 } canzero_message_set_req;
-static const uint32_t canzero_message_set_req_id = 0x1DE;
+static const uint32_t canzero_message_set_req_id = 0x15E;
 void canzero_can0_poll();
 void canzero_can1_poll();
 uint32_t canzero_update_continue(uint32_t delta_time);

@@ -8,11 +8,10 @@ namespace telemetry_board {
 
 static constexpr bool EnableLoopback = false;
 
-using CANzeroCan0 = Can3;
-using CANzeroCan1 = Can2;
+using CANzeroCan0 = Can2;
+using CANzeroCan1 = Can3;
 
 void can0_begin(CanBaudrate baudrate, std::span<CanFilter> filters) {
-  return;
   CanBeginInfo beginInfo;
   beginInfo.baudrate = baudrate;
   beginInfo.loopback = EnableLoopback;
@@ -22,7 +21,6 @@ void can0_begin(CanBaudrate baudrate, std::span<CanFilter> filters) {
 }
 
 void can1_begin(CanBaudrate baudrate, std::span<CanFilter> filters) {
-  return;
   CanBeginInfo beginInfo;
   beginInfo.baudrate = baudrate;
   beginInfo.loopback = EnableLoopback;
@@ -32,7 +30,6 @@ void can1_begin(CanBaudrate baudrate, std::span<CanFilter> filters) {
 }
 
 bool can0_recv(CanFrame *frame) {
-  return false;
   CAN_message_t msg;
   int rx = CANzeroCan0::recv(&msg);
   if (rx) {
@@ -45,7 +42,6 @@ bool can0_recv(CanFrame *frame) {
 }
 
 bool can1_recv(CanFrame *frame) {
-  return false;
   CAN_message_t msg;
   int rx = CANzeroCan1::recv(&msg);
   if (rx) {
@@ -58,7 +54,6 @@ bool can1_recv(CanFrame *frame) {
 }
 
 bool can0_send(CanFrame *frame) {
-  return true;
   CAN_message_t msg;
   msg.id = frame->id & 0x1FFFFFFF;
   msg.len = frame->dlc;
@@ -70,7 +65,6 @@ bool can0_send(CanFrame *frame) {
 }
 
 bool can1_send(CanFrame *frame) {
-  return true;
   CAN_message_t msg;
   msg.id = frame->id & 0x1FFFFFFF;
   msg.len = frame->dlc;

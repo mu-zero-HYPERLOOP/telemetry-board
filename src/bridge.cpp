@@ -48,7 +48,7 @@ static bool can_hardware_recv(telemetry_board::CanFrame *canFrame) {
   if constexpr (bus == 0) {
     return telemetry_board::can0_recv(canFrame);
   } else if (bus == 1) {
-    return telemetry_board::can0_recv(canFrame);
+    return telemetry_board::can1_recv(canFrame);
   }
 }
 
@@ -57,7 +57,7 @@ static bool can_hardware_send(telemetry_board::CanFrame *canFrame) {
   if constexpr (bus == 0) {
     return telemetry_board::can0_send(canFrame);
   } else if (bus == 1) {
-    return telemetry_board::can0_send(canFrame);
+    return telemetry_board::can1_send(canFrame);
   }
 }
 
@@ -74,12 +74,10 @@ template <std::size_t bus> static void update_bus() {
     frame.dlc = canFrame.dlc;
     std::memcpy(frame.data, canFrame.data, sizeof(uint8_t) * 8);
     {
-      bool succ = forward_to_canzero<bus>(&frame);
-      assert(succ); // TODO REMOVE ASSERTIONS.
+      forward_to_canzero<bus>(&frame);
     }
     {
-      bool succ = telemetry::can_send(bus, &frame);
-      assert(succ);
+      telemetry::can_send(static_cast<uint8_t>(bus), &frame);
     }
   }
 
@@ -88,30 +86,26 @@ template <std::size_t bus> static void update_bus() {
   // - forward all frames to the hardware can.
   while (telemetry::can_recv(bus, &frame)) {
     {
-      bool succ = forward_to_canzero<bus>(&frame);
-      assert(succ);
+      forward_to_canzero<bus>(&frame);
     }
     canFrame.id = frame.id;
     canFrame.dlc = frame.dlc;
     std::memcpy(canFrame.data, frame.data, sizeof(uint8_t) * 8);
     {
-      bool succ = can_hardware_send<bus>(&canFrame);
-      assert(succ);
+      can_hardware_send<bus>(&canFrame);
     }
     // bridge::canzero_rxQueues[bus].enqueue(const canzero_frame &value)
   }
 }
 
-template <std::size_t bus_count> static void update_all_buses() {
-  if constexpr (bus_count == 0) {
-    return;
-  } else {
-    update_bus<bus_count - 1>();
-    update_all_buses<bus_count - 1>();
-  }
+static void update_all_buses() {
+  update_bus<0>();
+  update_bus<1>();
 }
 
-void update() { update_all_buses<CAN_BUS_COUNT>(); }
+void update() { 
+  update_all_buses(); 
+}
 
 } // namespace bridge
 

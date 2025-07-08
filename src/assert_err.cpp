@@ -1,5 +1,6 @@
 #include "canzero/canzero.h"
 #include "core_pins.h"
+#include "firmware/telemetry_board.hpp"
 #include <cmath>
 #include <Arduino.h>
 #include <avr/pgmspace.h>

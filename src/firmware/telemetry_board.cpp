@@ -84,6 +84,7 @@ static void initalizeEthernet() {
   if (!qindesign::network::Ethernet.begin(ip, subnet, gateway)) {
     s_linkState |= LinkStateBits::ERROR_BEGIN_ETHERNET;
   }
+  debugPrintf("Initalized ethernet");
 }
 
 void begin() {

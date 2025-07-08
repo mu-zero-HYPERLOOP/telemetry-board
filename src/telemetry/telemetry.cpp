@@ -70,7 +70,7 @@ void begin() {
   serverInfo.servicePort = 0; // dynamic port.
   serverInfo.timebase = Timestamp::now();
   serverInfo.networkHash = canzero_get_config_hash();
-  serverInfo.serverName = "Athena-SV";
+  serverInfo.serverName = "Polaris";
   serverInfo.serviceName = "CANzero";
   serverInfo.buildTime = buildTime();
 

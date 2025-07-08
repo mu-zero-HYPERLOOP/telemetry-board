@@ -16,6 +16,9 @@
 int main() {
   telemetry_board::delay(3_s);
 
+
+  debugPrintf("Hello, World");
+
   // start firmware.
   telemetry_board::begin();
 
