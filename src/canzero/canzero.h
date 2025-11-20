@@ -135,10 +135,6 @@ static inline float canzero_get_loop_frequency() {
   extern float __oe_loop_frequency;
   return __oe_loop_frequency;
 }
-static inline uint64_t canzero_get_test() {
-  extern uint64_t __oe_test;
-  return __oe_test;
-}
 typedef struct {
   get_resp_header m_header;
   uint32_t m_data;
@@ -153,27 +149,23 @@ typedef struct {
   uint8_t m_active_connections;
   uint8_t m_accepts_new_connections;
 } canzero_message_telemetry_board_stream_state;
-static const uint32_t canzero_message_telemetry_board_stream_state_id = 0xB4;
+static const uint32_t canzero_message_telemetry_board_stream_state_id = 0xD4;
 typedef struct {
   float m_telemetry_tx_memory_throughput;
   float m_telemetry_rx_memory_throughput;
 } canzero_message_telemetry_board_stream_telemetry_bandwidth;
-static const uint32_t canzero_message_telemetry_board_stream_telemetry_bandwidth_id = 0xD4;
+static const uint32_t canzero_message_telemetry_board_stream_telemetry_bandwidth_id = 0xF4;
 typedef struct {
   uint16_t m_dropped_tx_packets;
   uint16_t m_dropped_rx_packets;
   uint16_t m_dropped_tx_canframes;
   uint16_t m_dropped_rx_canframes;
 } canzero_message_telemetry_board_stream_dropped_frames;
-static const uint32_t canzero_message_telemetry_board_stream_dropped_frames_id = 0x74;
+static const uint32_t canzero_message_telemetry_board_stream_dropped_frames_id = 0x94;
 typedef struct {
   float m_loop_frequency;
 } canzero_message_telemetry_board_stream_loop_frequency;
-static const uint32_t canzero_message_telemetry_board_stream_loop_frequency_id = 0x94;
-typedef struct {
-  uint64_t m_test;
-} canzero_message_telemetry_board_stream_test;
-static const uint32_t canzero_message_telemetry_board_stream_test_id = 0xF4;
+static const uint32_t canzero_message_telemetry_board_stream_loop_frequency_id = 0xB4;
 typedef struct {
   uint8_t m_node_id;
   uint8_t m_unregister;
@@ -238,11 +230,6 @@ static inline void canzero_set_loop_frequency(float value){
   __oe_loop_frequency = value;
 }
 
-static inline void canzero_set_test(uint64_t value){
-  extern uint64_t __oe_test;
-  __oe_test = value;
-}
-
 void canzero_send_config_hash();
 
 void canzero_send_build_time();
@@ -266,7 +253,5 @@ void canzero_send_active_connections();
 void canzero_send_accepts_new_connections();
 
 void canzero_send_loop_frequency();
-
-void canzero_send_test();
 
 #endif

@@ -21,4 +21,7 @@ LinkStateCallback onLinkStateChange(LinkStateCallback callback);
 
 void led(bool digital);
 
+void lock_irq();
+void unlock_irq();
+
 } // namespace telemetry_board

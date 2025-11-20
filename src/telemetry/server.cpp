@@ -1,11 +1,9 @@
 #include "./server.h"
-#include "QNEthernet.h"
 #include "canzero/canzero.h"
-#include "core_pins.h"
 #include "firmware/can/can_bus_count.hpp"
 #include "firmware/telemetry/SocketAddr.hpp"
 #include "firmware/telemetry/TcpServer.hpp"
-#include "imxrt.h"
+#include "firmware/telemetry_board.hpp"
 #include "print.h"
 #include "telemetry/connection.h"
 #include "telemetry/ip_host.h"
@@ -134,7 +132,7 @@ void update() {
     }
 
     if (connection.closed()) {
-      __disable_irq();
+      telemetry_board::lock_irq();
       debugPrintf("[TCP-Server] Closed connection from ");
       telemetry_board::printSocketAddress(connection.remoteAddr());
       debugPrintf("\n");
@@ -144,7 +142,7 @@ void update() {
       if (!connections.remove(i)) {
         connections.clear();
       }
-      __enable_irq();
+      telemetry_board::unlock_irq();
       i--;
       continue;
     }

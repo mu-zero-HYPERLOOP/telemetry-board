@@ -1,5 +1,7 @@
 #include "firmware/telemetry/TcpServer.hpp"
+#include "firmware/telemetry/SocketAddr.hpp"
 
+#include <arpa/inet.h>
 #include <cassert>
 #include <cerrno>
 #include <cstddef>
@@ -131,8 +133,7 @@ void TcpServer::close() {
   }
 }
 
-TcpConnection::TcpConnection(void *internals) : m_internals(internals) {
-}
+// TcpConnection::TcpConnection(void *internals) : m_internals(internals) {}
 
 TcpConnection::~TcpConnection() {
   if (m_internals != nullptr) {
@@ -151,7 +152,7 @@ void TcpConnection::close() {
   }
 }
 
-TcpSendInfo TcpConnection::send(const void *data, std::size_t size) {
+TcpSendResult TcpConnection::send_exact(const void *data, std::size_t size) {
   auto internals = reinterpret_cast<LinuxTcpConnection *>(m_internals);
   assert(internals->connectionFd != -1);
 
@@ -159,47 +160,68 @@ TcpSendInfo TcpConnection::send(const void *data, std::size_t size) {
   if (sent < 0) {
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
       // Would block, no fatal error
-      return TcpSendInfo::SKIPPED;
+      return TcpSendResult::WOULD_BLOCK;
     }
     // Fatal error, close connection
     close();
-    return TcpSendInfo::CLOSED;
+    return TcpSendResult::CLOSED;
   }
 
   bool succ = static_cast<std::size_t>(sent) == size;
   if (succ) {
-    return TcpSendInfo::SUCC;
+    return TcpSendResult::SUCC;
   } else {
     // tcp connection is in a weird state afterwards we just close here
     // in the future we could implement better ways to recover
     close();
-    return TcpSendInfo::CLOSED;
+    return TcpSendResult::CLOSED;
   }
 }
 
-TcpRecvInfo TcpConnection::recv(void *data, std::size_t size) {
+TcpRecvResult TcpConnection::recv_exact(void *data, std::size_t size) {
   auto internals = reinterpret_cast<LinuxTcpConnection *>(m_internals);
   assert(internals->connectionFd != -1);
 
   ssize_t received = ::recv(internals->connectionFd, data, size, 0);
   if (received > 0) {
     // Successfully received some data
-    return TcpRecvInfo::SUCC;
+    return TcpRecvResult::SUCC;
   } else if (received == 0) {
     // Client disconnected
     close();
-    return TcpRecvInfo::CLOSED;
+    return TcpRecvResult::CLOSED;
   } else {
     // received < 0
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
       // No data available yet
-      return TcpRecvInfo::EMPTY;
+      return TcpRecvResult::EMPTY;
     } else {
       // Other error -> assume connection broken
       close();
-      return TcpRecvInfo::CLOSED;
+      return TcpRecvResult::CLOSED;
     }
   }
+}
+
+SocketAddr TcpConnection::remoteAddr() const {
+  assert(m_internals != nullptr);
+  auto internals = reinterpret_cast<LinuxTcpConnection *>(m_internals);
+  int fd = internals->connectionFd;
+  struct sockaddr_in addr;
+  socklen_t len = sizeof(addr);
+
+  if (getpeername(fd, (struct sockaddr *)&addr, &len) == -1) {
+    perror("getpeername");
+    // handle error
+  }
+
+  uint32_t ip = ntohl(addr.sin_addr.s_addr); // host-order IPv4 address
+  uint16_t port = ntohs(addr.sin_port);
+
+  return SocketAddr{
+      .ip = ip, // <- unsigned int.
+      .port = port,
+  };
 }
 
 } // namespace telemetry_board

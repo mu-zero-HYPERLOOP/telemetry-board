@@ -5,7 +5,7 @@
 namespace telemetry_board {
 
 struct SocketAddr {
-  unsigned int ip;
+  uint32_t ip;
   std::uint16_t port;
 };
 

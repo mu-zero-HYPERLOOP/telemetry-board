@@ -1,17 +1,15 @@
-#include "canzero/canzero.h"
-#include "core_pins.h"
 #include "firmware/telemetry_board.hpp"
-#include <cmath>
-#include <Arduino.h>
+#include "print.h"
 #include <avr/pgmspace.h>
+#include <cmath>
 
 /**
  * This function get's invoked if a assertion fails
  */
-void FASTRUN __assert_func(const char *filename, int line, const char *assert_func,
-                   const char *expr) {
+void FASTRUN __assert_func(const char *filename, int line,
+                           const char *assert_func, const char *expr) {
   while (true) {
-    Serial.println("Assertion fault");
-    delay(1000);
+    debugPrintf("Assertion Fault");
+    telemetry_board::delay(1000_ms);
   }
 }

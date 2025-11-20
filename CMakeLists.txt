@@ -11,19 +11,23 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(${PROJECT_NAME}
-  src/main.cpp
-  src/canzero/telemetry/telemetry.cpp
-  src/canzero/telemetry/becon.cpp
-  src/canzero/telemetry/server.cpp
-  src/canzero/telemetry/connection.cpp
   src/canzero/canzero.cpp
-  src/canzero/canzero_schedule_policy_hooks.cpp
-  src/bridge.cpp
-  src/util/build_time.cpp
-
+  src/canzero_hooks/canzero_schedule_policy.cpp
   mock/firmware/can/can.cpp
-  mock/firmware/telemetry/UdpServer.cpp
   mock/firmware/telemetry/TcpServer.cpp
+  mock/firmware/telemetry/UdpServer.cpp
+  mock/firmware/telemetry_board.cpp
+  src/firmware/telemetry/SocketAddr.cpp
+  src/telemetry/becon.cpp
+  src/telemetry/connection.cpp
+  src/telemetry/server.cpp
+  src/telemetry/telemetry.cpp
+  src/util/build_time.cpp
+  src/assert_err.cpp
+  src/bridge.cpp
+  src/main.cpp
+  mock/print.cpp
+
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE src/)

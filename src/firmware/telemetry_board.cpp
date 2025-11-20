@@ -133,4 +133,11 @@ void led(bool digital) {
   digitalWrite(LED_BUILTIN, static_cast<uint8_t>(digital));
 }
 
+void lock_irq() {
+  __disable_irq();
+}
+void unlock_irq() {
+  __enable_irq();
+}
+
 } // namespace telemetry_board

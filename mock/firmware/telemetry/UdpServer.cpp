@@ -3,8 +3,9 @@
 #include <asm-generic/socket.h>
 #include <cassert>
 #include <cstdlib>
-#include <cstring> // for std::memset
-#include <fcntl.h> // for fcntl()
+#include "print.h"
+#include <cstring>      // for std::memset
+#include <fcntl.h>      // for fcntl()
 #include <netinet/in.h> // for sockaddr_in
 #include <stdexcept>
 #include <sys/socket.h> // for socket functions
@@ -30,23 +31,28 @@ void UdpServer::connect(std::uint16_t port) {
   auto internals = reinterpret_cast<LinuxUdpServer *>(m_internals);
 
   if (internals->socket_fd == -1) {
-    close(internals->socket_fd);
+    ::close(internals->socket_fd);
   }
 
   int fd = socket(AF_INET, SOCK_DGRAM, 0);
   if (fd < 0) {
     throw std::runtime_error("Failed to create udp-socket");
   }
+
+  int yes = 1;
+  setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+  setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &yes,
+             sizeof(yes)); // important
   int broadcastEnable = -1;
   if (setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &broadcastEnable,
                  sizeof(broadcastEnable)) < 0) {
-    close(fd);
+    ::close(fd);
     fd = -1;
     throw std::runtime_error("Failed to set SO_BROADCAST for udp-socket");
   }
   int flags = fcntl(fd, F_GETFL, 0);
   if (flags < 0 || fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) {
-    close(fd);
+    ::close(fd);
     fd = -1;
     throw std::runtime_error("Failed to make udp-socket non-blocking");
   }
@@ -57,8 +63,9 @@ void UdpServer::connect(std::uint16_t port) {
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(port);
 
+  debugPrintf("UdpServer::connect\n");
   if (bind(fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) < 0) {
-    close(fd);
+    ::close(fd);
     fd = -1;
     throw std::runtime_error("Failed to bind udp-socket");
   }
@@ -68,7 +75,7 @@ void UdpServer::connect(std::uint16_t port) {
 
 UdpServer::~UdpServer() {
   auto internals = reinterpret_cast<LinuxUdpServer *>(m_internals);
-  close(internals->socket_fd);
+  ::close(internals->socket_fd);
   internals->socket_fd = -1;
   free(internals->recvBuffer);
   free(m_internals);
@@ -107,9 +114,7 @@ bool UdpServer::recv(void *data, std::size_t size, SocketAddr *addr) {
       addr ? reinterpret_cast<sockaddr *>(&srcAddr) : nullptr;
   socklen_t *srcAddrLenPtr = addr ? &srcAddrLen : nullptr;
 
-  ssize_t received =
-      ::recvfrom(fd, data, size, 0,
-                 srcAddrPtr, srcAddrLenPtr);
+  ssize_t received = ::recvfrom(fd, data, size, 0, srcAddrPtr, srcAddrLenPtr);
   if (received <= 0) {
     return false;
   }
@@ -122,6 +127,15 @@ bool UdpServer::recv(void *data, std::size_t size, SocketAddr *addr) {
   }
 
   return true;
+}
+
+void UdpServer::close() {
+  auto internals = reinterpret_cast<LinuxUdpServer *>(m_internals);
+  ::close(internals->socket_fd);
+  internals->socket_fd = -1;
+  free(internals->recvBuffer);
+  free(m_internals);
+  m_internals = nullptr;
 }
 
 } // namespace telemetry_board

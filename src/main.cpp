@@ -1,13 +1,10 @@
 #include "bridge.hpp"
 #include "can_defaults.h"
 #include "canzero/canzero.h"
-#include "core_pins.h"
 #include "firmware/can/can.hpp"
 #include "firmware/telemetry_board.hpp"
-#include "pins_arduino.h"
 #include "print.h"
 #include "telemetry/telemetry.h"
-#include "usb_serial.h"
 #include "util/interval.h"
 #include "util/timing.h"
 #include <cassert>
