@@ -18,7 +18,7 @@ void can1_begin(CanBaudrate baudrate, std::span<CanFilter> filters) {
 }
 
 bool can0_recv(CanFrame *frame) {
-  std::optional<tcpcan::CanFrame> rx = s_tcpcan->recv<1>();
+  std::optional<tcpcan::CanFrame> rx = s_tcpcan->recv<0>();
   if (!rx.has_value()) {
     return 0;
   }
@@ -29,12 +29,9 @@ bool can0_recv(CanFrame *frame) {
 }
 
 bool can1_recv(CanFrame *frame) {
-  std::optional<tcpcan::CanFrame> rx = s_tcpcan->recv<0>();
+  std::optional<tcpcan::CanFrame> rx = s_tcpcan->recv<1>();
   if (!rx.has_value()) {
     return 0;
-  }
-  if (frame->id == 0x16F) {
-    printf("RX-Heartbeat CAN0\n");
   }
   frame->dlc = rx->dlc;
   frame->id = rx->can_id;

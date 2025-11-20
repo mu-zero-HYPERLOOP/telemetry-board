@@ -8,6 +8,8 @@
 #include "telemetry/server.h"
 #include "telemetry/server_info.hpp"
 #include "util/build_time.hpp"
+#include "util/ema.h"
+#include "util/interval.h"
 #include "util/timing.h"
 
 namespace telemetry {
@@ -19,8 +21,10 @@ static bool running;
 static uint32_t droppedTxPackets;
 static uint32_t restartCount = 0; // TODO canzero OE.
 
-IntervalTiming txPacketFrequencyTiming;
-IntervalTiming rxPacketFrequencyTiming;
+IntervalTiming txPacketFrequencyTiming{0.001};
+IntervalTiming rxPacketFrequencyTiming{0.001};
+
+Interval bandwidthMeasInterval{10_Hz};
 
 static void start() {
   restartCount += 1;
@@ -83,28 +87,33 @@ void update() {
     becon::update();  // udp becon!
     canzero_set_dropped_tx_packets(droppedTxPackets);
 
-    Frequency txPacketFreq = txPacketFrequencyTiming.frequency();
-    canzero_set_telemetry_tx_memory_throughput(
-        (txPacketFreq * sizeof(Packet) * 8) / 1_kHz);
+    if (bandwidthMeasInterval.next()) {
+      Frequency txPacketFreq = txPacketFrequencyTiming.frequency();
 
-    Frequency rxPacketFreq = rxPacketFrequencyTiming.frequency();
+      canzero_set_telemetry_tx_memory_throughput(
+          (txPacketFreq * sizeof(Packet) * 8) / 1_kHz);
 
-    canzero_set_telemetry_rx_memory_throughput(
-        (rxPacketFreq * sizeof(Packet) * 8) / 1_kHz);
+      Frequency rxPacketFreq = rxPacketFrequencyTiming.frequency();
 
-    canzero_set_accepts_new_connections(!server::listening());
+      canzero_set_telemetry_rx_memory_throughput(
+          (rxPacketFreq * sizeof(Packet) * 8) / 1_kHz);
+    }
+
+    canzero_set_accepts_new_connections(server::listening() ? bool_t_TRUE
+                                                            : bool_t_FALSE);
     canzero_set_active_connections(server::activeConnectionCount());
 
   } else {
     canzero_set_dropped_tx_packets(0);
     canzero_set_telemetry_tx_memory_throughput(0.0f);
     canzero_set_telemetry_rx_memory_throughput(0.0f);
-    canzero_set_accepts_new_connections(false);
+    canzero_set_accepts_new_connections(bool_t_FALSE);
     canzero_set_active_connections(0);
   }
   if (running) {
     if (server::activeConnectionCount() > 0) {
-      canzero_set_telemetry_state(telemetry_state::telemetry_state_CLIENT_CONNECTED);
+      canzero_set_telemetry_state(
+          telemetry_state::telemetry_state_CLIENT_CONNECTED);
     } else {
       canzero_set_telemetry_state(telemetry_state::telemetry_state_LISTENING);
     }

@@ -22,7 +22,7 @@ uint16_t DMAMEM __oe_dropped_rx_canframes;
 float DMAMEM __oe_telemetry_tx_memory_throughput;
 float DMAMEM __oe_telemetry_rx_memory_throughput;
 uint8_t DMAMEM __oe_active_connections;
-uint8_t DMAMEM __oe_accepts_new_connections;
+bool_t DMAMEM __oe_accepts_new_connections;
 float DMAMEM __oe_loop_frequency;
 static void canzero_serialize_canzero_message_get_resp(canzero_message_get_resp* msg, canzero_frame* frame) {
   volatile uint8_t* data = (volatile uint8_t*)frame->data;
@@ -658,7 +658,7 @@ static PROGMEM void canzero_handle_get_req(canzero_frame* frame) {
     break;
   }
   case 10: {
-    resp.m_data |= ((uint32_t)(__oe_accepts_new_connections & (0xFF >> (8 - 1)))) << 0;
+    resp.m_data |= ((uint32_t)(((uint8_t)__oe_accepts_new_connections) & (0xFF >> (8 - 1)))) << 0;
     resp.m_header.m_sof = 1;
     resp.m_header.m_eof = 1;
     resp.m_header.m_toggle = 0;
@@ -814,8 +814,8 @@ static PROGMEM void canzero_handle_set_req(canzero_frame* frame) {
     if (msg.m_header.m_sof != 1 || msg.m_header.m_toggle != 0 || msg.m_header.m_eof != 1) {
       return;
     }
-    uint8_t accepts_new_connections_tmp;
-    accepts_new_connections_tmp = ((uint8_t)(((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 1)))));
+    bool_t accepts_new_connections_tmp;
+    accepts_new_connections_tmp = ((bool_t)((msg.m_data >> 0) & (0xFFFFFFFF >> (32 - 1))));
     canzero_set_accepts_new_connections(accepts_new_connections_tmp);
     break;
   }
@@ -983,7 +983,7 @@ uint32_t canzero_update_continue(uint32_t time){
 #define BUILD_MIN   ((BUILD_TIME_IS_BAD) ? 99 :  COMPUTE_BUILD_MIN)
 #define BUILD_SEC   ((BUILD_TIME_IS_BAD) ? 99 :  COMPUTE_BUILD_SEC)
 void canzero_init() {
-  __oe_config_hash = 5395923809210427962ull;
+  __oe_config_hash = 969764988675021836ull;
   __oe_build_time = {
     .m_year = BUILD_YEAR,
     .m_month = BUILD_MONTH,
@@ -1065,8 +1065,8 @@ void canzero_set_active_connections(uint8_t value) {
     }
   }
 }
-void canzero_set_accepts_new_connections(uint8_t value) {
-  extern uint8_t __oe_accepts_new_connections;
+void canzero_set_accepts_new_connections(bool_t value) {
+  extern bool_t __oe_accepts_new_connections;
   if (__oe_accepts_new_connections != value) {
     __oe_accepts_new_connections = value;
     if (state_interval_job.climax > state_interval_job.job.stream_job.last_schedule + 1) {
@@ -1225,7 +1225,7 @@ void canzero_send_active_connections() {
 }
 void canzero_send_accepts_new_connections() {
   canzero_message_get_resp msg;
-  msg.m_data |= ((uint32_t)(__oe_accepts_new_connections & (0xFF >> (8 - 1)))) << 0;
+  msg.m_data |= ((uint32_t)(((uint8_t)__oe_accepts_new_connections) & (0xFF >> (8 - 1)))) << 0;
   msg.m_header.m_eof = 1;
   msg.m_header.m_sof = 1;
   msg.m_header.m_toggle = 0;

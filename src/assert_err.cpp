@@ -1,7 +1,6 @@
 #include "firmware/telemetry_board.hpp"
 #include "print.h"
 #include <avr/pgmspace.h>
-#include <cmath>
 
 /**
  * This function get's invoked if a assertion fails

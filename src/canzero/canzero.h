@@ -55,6 +55,10 @@ typedef enum {
   telemetry_state_LISTENING = 2,
   telemetry_state_CLIENT_CONNECTED = 3,
 } telemetry_state;
+typedef enum {
+  bool_t_FALSE = 0,
+  bool_t_TRUE = 1,
+} bool_t;
 typedef struct {
   uint16_t m_year;
   uint8_t m_month;
@@ -127,8 +131,8 @@ static inline uint8_t canzero_get_active_connections() {
   extern uint8_t __oe_active_connections;
   return __oe_active_connections;
 }
-static inline uint8_t canzero_get_accepts_new_connections() {
-  extern uint8_t __oe_accepts_new_connections;
+static inline bool_t canzero_get_accepts_new_connections() {
+  extern bool_t __oe_accepts_new_connections;
   return __oe_accepts_new_connections;
 }
 static inline float canzero_get_loop_frequency() {
@@ -147,7 +151,7 @@ static const uint32_t canzero_message_set_resp_id = 0x15D;
 typedef struct {
   telemetry_state m_telemetry_state;
   uint8_t m_active_connections;
-  uint8_t m_accepts_new_connections;
+  bool_t m_accepts_new_connections;
 } canzero_message_telemetry_board_stream_state;
 static const uint32_t canzero_message_telemetry_board_stream_state_id = 0xD4;
 typedef struct {
@@ -223,7 +227,7 @@ static inline void canzero_set_telemetry_rx_memory_throughput(float value){
 
 void canzero_set_active_connections(uint8_t value);
 
-void canzero_set_accepts_new_connections(uint8_t value);
+void canzero_set_accepts_new_connections(bool_t value);
 
 static inline void canzero_set_loop_frequency(float value){
   extern float __oe_loop_frequency;
