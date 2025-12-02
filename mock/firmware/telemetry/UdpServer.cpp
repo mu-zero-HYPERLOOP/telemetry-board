@@ -1,6 +1,10 @@
 #include "firmware/telemetry/UdpServer.hpp"
-#include <arpa/inet.h> // for htons()
-#include <asm-generic/socket.h>
+#include <cstdio>
+#include <sys/fcntl.h>
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <cassert>
 #include <cstdlib>
 #include "print.h"

@@ -1,7 +1,10 @@
 #pragma once
 
-#include "firmware/telemetry/SocketAddr.hpp"
+
+#include <cstddef>
 #include <cstdint>
+#include "firmware/telemetry/SocketAddr.hpp"
+
 namespace telemetry_board {
 
 class UdpServer {

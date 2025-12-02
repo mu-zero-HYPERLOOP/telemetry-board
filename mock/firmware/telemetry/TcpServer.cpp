@@ -1,7 +1,9 @@
 #include "firmware/telemetry/TcpServer.hpp"
 #include "firmware/telemetry/SocketAddr.hpp"
 
+#include <cstdio>
 #include <arpa/inet.h>
+#include <sys/fcntl.h>
 #include <cassert>
 #include <cerrno>
 #include <cstddef>
